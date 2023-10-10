@@ -1,8 +1,8 @@
 {
   "name": "keil-vscode-assistant",
-  "displayName": "Keil VSCode Assistant",
-  "description": "An assistant for Keil uVision",
-  "version": "1.7.9",
+  "displayName": "%displayName%",
+  "description": "%description%",
+  "version": "1.8.0",
   "publisher": "jacksonjim",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
   "keywords": [
@@ -31,24 +31,27 @@
   },
   "bugs": {
     "url": "https://github.com/jacksonjim/keil-assistant/issues",
-    "email": "2584456014@qq.com"
+    "email": "jacksonjim@foxmail.com"
   },
   "contributes": {
     "configuration": [
       {
-        "title": "Keil Assistant",
+        "title": "%keil-assistant.contributes.conf.title%",
         "properties": {
-          "KeilAssistant.Keil.InstallationDirectory":{
-            "type": "string",
-            "scope": "machine",
-            "markdownDescription": "Keil (MDK/C51/C251) Installation directory (Keil 安装目录) default: C:\\Keil_v5",
-            "description": "UV4 安装目录",
-            "default": "C:\\Keil_v5"
+          "KeilAssistant.Keil.HOME": {
+            "type": "object",
+            "markdownDescription": "%keil-assistant.contributes.conf.props.keil.home.markdownDescription%",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "default": {
+              "MDK": "C:\\Keil_v5"
+            }
           },
           "KeilAssistant.Project.ExcludeList": {
             "type": "array",
             "scope": "resource",
-            "markdownDescription": "uVision project file name exclude list",
+            "markdownDescription": "%keil-assistant.contributes.conf.props.project.excludeList.description%",
             "default": [
               "template.uvproj",
               "template.uvprojx"
@@ -57,7 +60,7 @@
           "KeilAssistant.Project.FileLocationList": {
             "type": "array",
             "scope": "resource",
-            "markdownDescription": "uVision project file locations",
+            "markdownDescription": "%keil-assistant.contributes.conf.props.project.fileLocationList.description%",
             "default": []
           }
         }
@@ -66,62 +69,62 @@
     "commands": [
       {
         "command": "explorer.open",
-        "title": "Open keil uVision project",
+        "title": "%keil-assistant.contributes.commands.project-open.title%",
         "icon": {
-          "light": "./res/icons/ClassAdded_16x.svg",
-          "dark": "./res/icons/ClassAdded_16x.svg"
+          "light": "./res/icons/ClassAdded_16x_light.svg",
+          "dark": "./res/icons/ClassAdded_16x_dark.svg"
         }
       },
       {
         "command": "project.switch",
-        "title": "Switch Target",
+        "title": "%keil-assistant.contributes.commands.project-open.title%",
         "icon": {
-          "light": "./res/icons/SwitchSourceOrTarget_16x.svg",
-          "dark": "./res/icons/SwitchSourceOrTarget_16x.svg"
+          "light": "./res/icons/SwitchSourceOrTarget_16x_light.svg",
+          "dark": "./res/icons/SwitchSourceOrTarget_16x_dark.svg"
         }
       },
       {
         "command": "project.active",
-        "title": "Active Project"
+        "title": "%keil-assistant.contributes.commands.project-active.title%"
       },
       {
         "command": "project.close",
-        "title": "Close Project",
+        "title": "%keil-assistant.contributes.commands.project-close.title%",
         "icon": {
-          "light": "./res/icons/StatusOffline_16x.svg",
-          "dark": "./res/icons/StatusOffline_16x.svg"
+          "light": "./res/icons/StatusOffline_16x_light.svg",
+          "dark": "./res/icons/StatusOffline_16x_dark.svg"
         }
       },
       {
         "command": "project.build",
-        "title": "Build",
+        "title": "%keil-assistant.contributes.commands.project-build.title%",
         "icon": {
-          "light": "./res/icons/BuildSelection_16x.svg",
-          "dark": "./res/icons/BuildSelection_16x.svg"
+          "light": "./res/icons/BuildSelection_16x_light.svg",
+          "dark": "./res/icons/BuildSelection_16x_dark.svg"
         }
       },
       {
         "command": "project.rebuild",
-        "title": "Rebuild",
+        "title": "%keil-assistant.contributes.commands.project-rebuild.title%",
         "icon": {
-          "light": "./res/icons/BuildSolution_16x.svg",
-          "dark": "./res/icons/BuildSolution_16x.svg"
+          "light": "./res/icons/BuildSolution_16x_light.svg",
+          "dark": "./res/icons/BuildSolution_16x_dark.svg"
         }
       },
       {
         "command": "project.download",
-        "title": "Download To Device",
+        "title": "%keil-assistant.contributes.commands.project-download.title%",
         "icon": {
-          "light": "./res/icons/TransferDownload_16x.svg",
-          "dark": "./res/icons/TransferDownload_16x.svg"
+          "light": "./res/icons/TransferDownload_16x_light.svg",
+          "dark": "./res/icons/TransferDownload_16x_dark.svg"
         }
       },
       {
         "command": "item.copyValue",
-        "title": "Copy Item Value",
+        "title": "%keil-assistant.contributes.commands.project-copy.title%",
         "icon": {
-          "light": "./res/icons/CopyToClipboard_16x.svg",
-          "dark": "./res/icons/CopyToClipboard_16x.svg"
+          "light": "./res/icons/CopyToClipboard_16x_light.svg",
+          "dark": "./res/icons/CopyToClipboard_16x_dark.svg"
         }
       }
     ],
@@ -243,7 +246,7 @@
       "explorer": [
         {
           "id": "project",
-          "name": "Keil uVision Project"
+          "name": "%keil-assistant.contributes.views.explorer.name%"
         }
       ]
     },
@@ -326,23 +329,27 @@
     "vsce-publish": "vsce publish"
   },
   "devDependencies": {
+    "@types/vscode": "^1.74.0",
     "@types/glob": "^8.1.0",
     "@types/mocha": "^10.0.1",
     "@types/node": "^16.x",
-    "@types/vscode": "^1.74.0",
-    "@typescript-eslint/eslint-plugin": "^6.2.0",
-    "@typescript-eslint/parser": "^6.2.0",
-    "@vscode/test-electron": "^2.3.2",
-    "@vscode/vsce": "^2.20.0",
-    "eslint": "^8.41.0",
+    "@typescript-eslint/eslint-plugin": "^6.7.5",
+    "@typescript-eslint/parser": "^6.7.5",
+    "@vscode/test-electron": "^2.3.5",
+    "@vscode/vsce": "^2.21.1",
+    "@vscode/l10n-dev": "^0.0.29",
+    "eslint": "^8.51.0",
     "glob": "^8.1.0",
     "mocha": "^10.2.0",
     "source-map-support": "^0.5.21",
-    "ts-loader": "^9.4.4",
-    "typescript": "^5.1.6",
+    "ts-loader": "^9.5.0",
+    "typescript": "^5.2.2",
     "webpack": "^5.88.2",
     "webpack-cli": "^5.1.4",
-    "fast-xml-parser": "^4.2.7",
+    "fast-xml-parser": "^4.3.2",
     "iconv-lite": "0.6.3"
+  },
+  "dependencies": {
+    "@vscode/l10n": "^0.0.16"
   }
 }

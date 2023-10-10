@@ -733,17 +733,11 @@ abstract class Target implements IView {
         }
         this.isTaskRunning = true;
         writeFileSync(this.uv4LogFile.path, '');
-        // const cmd = `"${ResourceManager.getInstance().getKeilUV4Path()}" -${type} "${this.project.uvprjFile.path}" -j0 -t "${this.targetName}" -o "${this.uv4LogFile.path}"`;
         channel.clear();
         channel.show();
         channel.appendLine(`Start to ${name} target ${this.label}`);
-        // const preLog = ` ${name} target ${this.label}`;
 
-        // const timer = setInterval(async () => {
-        //     const logst = readFileSync(this.uv4LogFile.path);
-        //     channel.replace(`${iconv.decode(logst, 'cp936')}`);
-        // }, 200);
-        const execCommand = spawn(`${ResourceManager.getInstance().getKeilUV4Path()}`,
+        const execCommand = spawn(`${ResourceManager.getInstance().getKeilUV4Path(this.getKeilPlatform())}`,
             [
                 `-${type}`, `${this.project.uvprjFile.path}`,
                 '-j0',
@@ -850,9 +844,8 @@ abstract class Target implements IView {
     protected abstract parseRefLines(target: any, lines: string[]): string[];
 
     protected abstract getProblemMatcher(): string[];
-    // protected abstract getBuildCommand(): string[];
-    // protected abstract getRebuildCommand(): string[];
-    // protected abstract getDownloadCommand(): string[];
+
+    protected abstract getKeilPlatform(): string;
 }
 
 //===============================================
@@ -865,6 +858,10 @@ class C51Target extends Target {
             return new Error(`This uVision project is not a C51 project, but have a 'uvproj' suffix !`);
         }
 
+    }
+
+    protected getKeilPlatform(): string {
+        return "C51";
     }
 
     protected parseRefLines(_target: any, _lines: string[]): string[] {
@@ -903,7 +900,7 @@ class C51Target extends Target {
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
-        const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir());
+        const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform()));
         const vendor = target['TargetOption']['TargetCommonOption']['Vendor'];
         const list = [];
         if (keilRootDir.isDir()) {
@@ -936,34 +933,6 @@ class C51Target extends Target {
     protected getProblemMatcher(): string[] {
         return ['$c51'];
     }
-    /*
-    protected getBuildCommand(): string[] {
-        return [
-            '--uv4Path', ResourceManager.getInstance().getC51UV4Path(),
-            '--prjPath', this.project.uvprjFile.path,
-            '--targetName', this.targetName,
-            '-c', '${uv4Path} -b ${prjPath} -j0 -t ${targetName}'
-        ];
-    }
-
-    protected getRebuildCommand(): string[] {
-        return [
-            '--uv4Path', ResourceManager.getInstance().getC51UV4Path(),
-            '--prjPath', this.project.uvprjFile.path,
-            '--targetName', this.targetName,
-            '-c', '${uv4Path} -r ${prjPath} -j0 -t ${targetName}'
-        ];
-    }
-
-    protected getDownloadCommand(): string[] {
-        return [
-            '--uv4Path', ResourceManager.getInstance().getC51UV4Path(),
-            '--prjPath', this.project.uvprjFile.path,
-            '--targetName', this.targetName,
-            '-c', '${uv4Path} -f ${prjPath} -j0 -t ${targetName}'
-        ];
-    }
-    */
 }
 
 class C251Target extends Target {
@@ -974,6 +943,10 @@ class C251Target extends Target {
             return new Error(`This uVision project is not a C251 project, but have a 'uvproj' suffix !`);
         }
 
+    }
+    
+    protected getKeilPlatform(): string {
+        return "C251";
     }
 
     protected parseRefLines(_target: any, _lines: string[]): string[] {
@@ -1014,7 +987,7 @@ class C251Target extends Target {
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
-        const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir());
+        const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform()));
         const vendor = target['TargetOption']['TargetCommonOption']['Vendor'];
         const list = [];
         if (keilRootDir.isDir()) {
@@ -1047,34 +1020,6 @@ class C251Target extends Target {
     protected getProblemMatcher(): string[] {
         return ['$c251'];
     }
-    /*
-    protected getBuildCommand(): string[] {
-        return [
-            '--uv4Path', ResourceManager.getInstance().getC251UV4Path(),
-            '--prjPath', this.project.uvprjFile.path,
-            '--targetName', this.targetName,
-            '-c', '${uv4Path} -b ${prjPath} -j0 -t ${targetName}'
-        ];
-    }
-
-    protected getRebuildCommand(): string[] {
-        return [
-            '--uv4Path', ResourceManager.getInstance().getC251UV4Path(),
-            '--prjPath', this.project.uvprjFile.path,
-            '--targetName', this.targetName,
-            '-c', '${uv4Path} -r ${prjPath} -j0 -t ${targetName}'
-        ];
-    }
-
-    protected getDownloadCommand(): string[] {
-        return [
-            '--uv4Path', ResourceManager.getInstance().getC251UV4Path(),
-            '--prjPath', this.project.uvprjFile.path,
-            '--targetName', this.targetName,
-            '-c', '${uv4Path} -f ${prjPath} -j0 -t ${targetName}'
-        ];
-    }
-    */
 }
 
 class MacroHandler {
@@ -1098,7 +1043,6 @@ class MacroHandler {
 }
 
 class ArmTarget extends Target {
-
 
     private static readonly armccMacros: string[] = [
         '__CC_ARM',
@@ -1238,11 +1182,15 @@ class ArmTarget extends Target {
 
     constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any) {
         super(prjInfo, uvInfo, targetDOM);
-        ArmTarget.initArmclangMacros();
+        this.initArmclangMacros();
     }
 
     protected checkProject(): Error | undefined {
         return undefined;
+    }
+
+    protected getKeilPlatform(): string {
+        return "MDK";
     }
 
     protected getOutputFolder(target: any): string | undefined {
@@ -1304,12 +1252,10 @@ class ArmTarget extends Target {
         }
     }
 
-    private static initArmclangMacros() {
+    private  initArmclangMacros() {
         if (ArmTarget.armclangBuildinMacros === undefined) {
-            // const armClangPath = dirname(dirname(ResourceManager.getInstance().getArmUV4Path()))
-            //     + File.sep + 'ARM' + File.sep + 'ARMCLANG' + File.sep + 'bin' + File.sep + 'armclang.exe';
-            const armClangPath = `${ResourceManager.getInstance().getKeilRootDir()}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
-            ArmTarget.armclangBuildinMacros = ArmTarget.getArmClangMacroList(armClangPath);
+            const armClangPath = `${ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform())}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
+            ArmTarget.armclangBuildinMacros = this.getArmClangMacroList(armClangPath);
         }
     }
 
@@ -1321,7 +1267,7 @@ class ArmTarget extends Target {
         }
     }
 
-    private static getArmClangMacroList(armClangPath: string): string[] {
+    private  getArmClangMacroList(armClangPath: string): string[] {
         try {
             const cmdLine = CmdLineHandler.quoteString(armClangPath, '"')
                 + ' ' + ['--target=arm-arm-none-eabi', '-E', '-dM', '-', '<nul'].join(' ');
@@ -1345,7 +1291,7 @@ class ArmTarget extends Target {
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
-        const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir());
+        const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform()));
         if (keilRootDir.isDir()) {
             const toolName = target['uAC6'] === 1 ? 'ARMCLANG' : 'ARMCC';
             const incDir = new File(`${keilRootDir.path}${File.sep}ARM${File.sep}${toolName}${File.sep}include`);
@@ -1375,33 +1321,7 @@ class ArmTarget extends Target {
     protected getProblemMatcher(): string[] {
         return ['$armcc', '$gcc'];
     }
-    /*
-        protected getBuildCommand(): string[] {
-            return [
-                '--uv4Path', ResourceManager.getInstance().getArmUV4Path(),
-                '--prjPath', this.project.uvprjFile.path,
-                '--targetName', this.targetName,
-                '-c', '${uv4Path} -b ${prjPath} -j0 -t ${targetName}'
-            ];
-        }
-    
-        protected getRebuildCommand(): string[] {
-            return [
-                '--uv4Path', ResourceManager.getInstance().getArmUV4Path(),
-                '--prjPath', this.project.uvprjFile.path,
-                '--targetName', this.targetName,
-                '-c', '${uv4Path} -r ${prjPath} -j0 -t ${targetName}'
-            ];
-        }
-    
-        protected getDownloadCommand(): string[] {
-            return [
-                '--uv4Path', ResourceManager.getInstance().getArmUV4Path(),
-                '--prjPath', this.project.uvprjFile.path,
-                '--targetName', this.targetName,
-                '-c', '${uv4Path} -f ${prjPath} -j0 -t ${targetName}'
-            ];
-        }*/
+
 }
 
 //================================================

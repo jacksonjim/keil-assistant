@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 25.2.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.2" baseProfile="tiny" id="图层_1"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 16 16"
+	 overflow="visible" xml:space="preserve">
+<path id="iconBg" fill="#3A3A3A" d="M7.5,9.5L8,9H5V5H4L2.5,6.5l-2-2L4,1l2,2L5,4h3l1-1l1.5,1.5L8,7L6.5,5.5L7,5H6v3h3l1-1l1,1h-1v2
+	l0,0H8C8,10,7.5,9.5,7.5,9.5z"/>
+<path id="notificationBg" fill="#3A3A3A" d="M15,13h-2v2h-2v-2H9v-2h2V9h2v2h2V13z"/>
+</svg>

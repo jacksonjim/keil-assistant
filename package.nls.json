@@ -1,0 +1,25 @@
+{
+    "displayName": "Keil VSCode Assistant",
+    "description": "An assistant for Keil uVision",
+    "keil-assistant.contributes.conf.title": "Keil Assistant",
+    "keil-assistant.contributes.views.explorer.name": "Keil uVision Project",
+    "keil-assistant.contributes.conf.props.mdk.home.description": "Keil (MDK/C51/C251 All in one) Installation directory, must not empty ; default: C:\\Keil_v5",
+    "keil-assistant.contributes.conf.props.C51.home.description": "Option Keil (C51) Installation directory",
+    "keil-assistant.contributes.conf.props.C251.home.description": "Option Keil (C251) Installation directory ",
+    "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision project file name exclude list",
+    "keil-assistant.contributes.conf.props.project.fileLocationList.description": "uVision project file locations",
+    "keil-assistant.contributes.commands.project-open.title": "Open keil uVision project",
+    "keil-assistant.contributes.commands.project-switch.title": "Switch Target",
+    "keil-assistant.contributes.commands.project-active.title": "Active Project",
+    "keil-assistant.contributes.commands.project-close.title": "Close Project",
+    "keil-assistant.contributes.commands.project-build.title": "Build",
+    "keil-assistant.contributes.commands.project-rebuild.title": "Rebuild",
+    "keil-assistant.contributes.commands.project-download.title": "Download To device",
+    "keil-assistant.contributes.commands.project-copy.title": "Copy Item Value",
+    "keil-assistant.contributes.conf.props.keil.home.markdownDescription": {
+        "message": "Keil uVision (MDK/C51/C251) Installation directory, Please modify the default value according to the actual installation directory, if (MDK/C51/C251) is installed in the same directory, you can set the MDK installation directory separately. \r\n Default value: {\"MDK\":\"C:\\Keil_v5\"}。\r\n\r\nExample:\r\n\r\n\"{\"MDK\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C51\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C251\":\"C:\\Keil_v5\"}\"",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    }
+}

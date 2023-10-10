@@ -1,0 +1,21 @@
+{
+    "displayName": "Keil VSCode 助理",
+    "description": "Keil uVision 助理",
+    "keil-assistant.contributes.conf.title": "Keil uVision 助理",
+    "keil-assistant.contributes.views.explorer.name": "Keil uVision 專案",
+    "keil-assistant.contributes.conf.props.mdk.home.description": "Keil uVision (MDK/C51/C251) 安裝目錄，必填項; 預設值: C:\\Keil_v5",
+    "keil-assistant.contributes.conf.props.C51.home.description": "Keil uVision C51 安裝目錄 可選項",
+    "keil-assistant.contributes.conf.props.C251.home.description": "Keil uVision C251 安裝目錄 可選項",
+    "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision 項目檔名排除清單",
+    "keil-assistant.contributes.conf.props.project.fileLocationList.description": "uVision 項目檔位置",
+    "keil-assistant.contributes.commands.project-open.title": "打開Keil uVision專案",
+    "keil-assistant.contributes.commands.project-switch.title": "切換目標",
+    "keil-assistant.contributes.commands.project-active.title": "活動專案",
+    "keil-assistant.contributes.commands.project-close.title": "關閉專案",
+    "keil-assistant.contributes.commands.project-build.title": "編譯",
+    "keil-assistant.contributes.commands.project-rebuild.title": "重新編譯",
+    "keil-assistant.contributes.commands.project-download.title": "下載到設備",
+    "keil-assistant.contributes.commands.project-copy.title": "複製專案值",
+    "keil-assistant.contributes.conf.props.keil.home.markdownDescription": "Keil uVision (MDK/C51/C251) 安裝目錄，請根據實際安裝目錄修改預設值， 如果(MDK/C51/C251)安裝在同一目錄內，可以單獨設置MDK的安裝目錄即可. \r\n 預設值: {\"MDK\":\"C:\\Keil_v5\"}。\r\n\r\n例子:\r\n\r\n\"{\"MDK\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C51\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C251\":\"C:\\Keil_v5\"}\""
+
+}

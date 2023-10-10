@@ -59,27 +59,33 @@ export class ResourceManager {
         return this.dirMap.get('bin')?.path + File.sep + 'Uv4Caller.exe';
     }
 
-    /*getC51UV4Path(): string {
-        // return this.getAppConfig().get<string>('C51.Uv4Path') || 'null';
-        return this.getKeilUV4Path();
+    getKeilUV4Path(target: string): string {
+        return `${this.getKeilRootDir(target)}${File.sep}UV4${File.sep}UV4.exe`;
     }
 
-    getC251UV4Path(): string {
-        // return this.getAppConfig().get<string>('C251.Uv4Path') || 'null';
-        return this.getKeilUV4Path();
+    getKeilRootDir(target: string): string {
+        let homePath: string | undefined;
+
+        const homeObj = this.getAppConfig().get<object>("Keil.HOME");
+        if (homeObj) {
+            const pathMap = new Map<string, string>(Object.entries(homeObj));
+
+            homePath = pathMap.get(target);
+            if (!homePath) {
+                homePath = pathMap.get("MDK");
+            }
+            if (homePath) {
+                return homePath;
+            }
+
+        }
+
+        return "C:\\Keil_v5";
+
+
     }
-
-    getArmUV4Path(): string {
-        // return this.getAppConfig().get<string>('MDK.Uv4Path') || 'null';
-        return this.getKeilUV4Path();
-    }*/
-
-    getKeilUV4Path(): string {
-        return `${this.getKeilRootDir()}${File.sep}UV4${File.sep}UV4.exe`;
-    }
-
-    getKeilRootDir(): string {
-        return this.getAppConfig().get<string>('Keil.InstallationDirectory') || 'C:\\Keil_v5';
+    getPropertyValue<T, K extends keyof T>(obj: T, key: K): T[K] {
+        return obj[key];
     }
 
     getProjectExcludeList(): string[] {
