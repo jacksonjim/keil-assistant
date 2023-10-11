@@ -2,30 +2,46 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.0]
+- Feature: 
+- #8 keil MDK/C51/C251 alone set Home PATH
+- setting show with l10n language
+- #9 Support keil MDK RTE includes
+***
+
 ## [v1.7.9]
 - Fixed: #7 log out Chinese garbled characters
-- 
+***
+ 
 ## [v1.7.8]
 - Fixed: #5 vscode engines version to 1.74.0,  #6 Arm clang genrate Macros
+***
 
 ## [v1.7.7]
 - Fixed: Include path for ARMCLANG with uvprojx
+***
   
 ## [v1.7.6]
 - Fixed: Include In Build icon is not show
-- 
+***
+ 
 ## [v1.7.5]
 - Fixed: include list for multiple targets
+***
   
 ## [v1.7.4]
 - Fixed: Log output channel mybe repeat show others log
+***
 
 ## [v1.7.3]
 - Optimize: Simplify keil configuration only use Keil installaction directory (C:\Keil_v5)
 - Feature: Record the selection target
+***
 
 ## [v1.7.2]
 - Feature: support C251
+***
+
 
 ## [v1.7.1]
 - Fixed: can't use shortcut key

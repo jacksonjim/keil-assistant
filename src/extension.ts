@@ -10,10 +10,12 @@ import { FileWatcher } from './node_utility/FileWatcher';
 import { Time } from './node_utility/Time';
 import { CmdLineHandler } from './CmdLineHandler';
 
-import { XMLParser } from 'fast-xml-parser';
+import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import { decode } from 'he';
 import { readFileSync, writeFileSync, createWriteStream } from 'fs';
 
 import iconv = require('iconv-lite');
+import { stringify } from 'querystring';
 
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -26,11 +28,7 @@ export function activate(context: vscode.ExtensionContext) {
     if (channel === undefined) {
         channel = vscode.window.createOutputChannel('keil-vscode');
     }
-    // channel.show();
-    // channel.appendLine("keil-assistant actived");
 
-    // vscode.window.showInformationMessage(`---- keil-assistant actived ----`);
-    // init resource
     ResourceManager.getInstance(context);
 
     const prjExplorer = new ProjectExplorer(context);
@@ -39,7 +37,6 @@ export function activate(context: vscode.ExtensionContext) {
     const projectSwitchCommandId = 'project.switch';
 
     subscriber.push(vscode.commands.registerCommand('explorer.open', async () => {
-        // channel.appendLine("[exporer]-> open dialog");
         const uri = await vscode.window.showOpenDialog({
             openLabel: 'Open a keil project',
             canSelectFolders: false,
@@ -49,7 +46,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         });
 
-        // channel.appendLine("[exporer]-> open dialog 1111");
         try {
             if (uri && uri.length > 0) {
 
@@ -335,25 +331,48 @@ class KeilProject implements IView, KeilProjectInfo {
 
     async load() {
         var doc: any = {};
+        let options = {
+            attributeNamePrefix: "@_",
+            attrNodeName: "attr", //default is 'false'
+            textNodeName: "#text",
+            ignoreAttributes: false,
+            ignoreNameSpace: false,
+            allowBooleanAttributes: false,
+            parseNodeValue: true,
+            parseAttributeValue: false,
+            trimValues: true,
+            cdataTagName: "__cdata", //default is 'false'
+            cdataPositionChar: "\\c",
+            parseTrueNumberOnly: false,
+            arrayMode: false, //"strict"
+            // attrValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
+            // tagValueProcessor: (val: any, tagName: any) => decode(val), //default is a=>a
+            stopNodes: ["parse-me-as-string"]
+        };
         // channel.show();
         try {
-            const parser = new XMLParser();
+            const parser = new XMLParser(options);
             const xmldoc = this.uvprjFile.read();
-            doc = parser.parse(xmldoc);
+            doc = parser.parse(xmldoc, options);
+
         } catch (e) {
             console.error(e);
+            channel.show();
+            channel.appendLine(`Error:${e}`);
         }
+
         const targets = doc['Project']['Targets']['Target'];
+        const rteDom = doc['Project']['RTE'];
 
         // init uVsion info
         this.uVsionFileInfo.schemaVersion = doc['Project']['SchemaVersion'];
-
+        // console.log(doc, targets);
         if (Array.isArray(targets)) {
             for (const target of targets) {
-                this.targetList.push(Target.getInstance(this, this.uVsionFileInfo, target));
+                this.targetList.push(Target.getInstance(this, this.uVsionFileInfo, target, rteDom));
             }
         } else {
-            this.targetList.push(Target.getInstance(this, this.uVsionFileInfo, targets));
+            this.targetList.push(Target.getInstance(this, this.uVsionFileInfo, targets, rteDom));
         }
 
         for (const target of this.targetList) {
@@ -501,6 +520,7 @@ abstract class Target implements IView {
     protected project: KeilProjectInfo;
     protected cppConfigName: string;
     protected targetDOM: any;
+    protected rteDom: any;
     protected uvInfo: UVisonInfo;
     protected fGroups: FileGroup[];
     protected includes: Set<string>;
@@ -510,10 +530,11 @@ abstract class Target implements IView {
     private uv4LogLockFileWatcher: FileWatcher;
     private isTaskRunning: boolean = false;
 
-    constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any) {
+    constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
         this._event = new EventEmitter();
         this.project = prjInfo;
         this.targetDOM = targetDOM;
+        this.rteDom = rteDom;
         this.uvInfo = uvInfo;
         this.prjID = prjInfo.prjID;
         this.targetName = targetDOM['TargetName'];
@@ -549,14 +570,14 @@ abstract class Target implements IView {
         this._event.on(event, listener);
     }
 
-    static getInstance(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any): Target {
+    static getInstance(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any): Target {
         if (prjInfo.uvprjFile.suffix.toLowerCase() === '.uvproj') {
             if (targetDOM['TargetOption']['Target251'] !== undefined) {
-                return new C251Target(prjInfo, uvInfo, targetDOM);
+                return new C251Target(prjInfo, uvInfo, targetDOM, rteDom);
             }
-            return new C51Target(prjInfo, uvInfo, targetDOM);
+            return new C51Target(prjInfo, uvInfo, targetDOM, rteDom);
         } else {
-            return new ArmTarget(prjInfo, uvInfo, targetDOM);
+            return new ArmTarget(prjInfo, uvInfo, targetDOM, rteDom);
         }
     }
 
@@ -608,8 +629,6 @@ abstract class Target implements IView {
         proFile.write(JSON.stringify(obj, undefined, 4));
     }
 
-
-
     async load(): Promise<void> {
 
         // check target is valid
@@ -620,6 +639,7 @@ abstract class Target implements IView {
         const defineListStr: string = this.getDefineString(this.targetDOM);
         const _groups: any = this.getGroups(this.targetDOM);
         const sysIncludes = this.getSystemIncludes(this.targetDOM);
+        const rteIncludes = this.getRTEIncludes(this.targetDOM, this.rteDom);
 
         const targetName = this.targetDOM['TargetName'];
 
@@ -629,6 +649,9 @@ abstract class Target implements IView {
         let incList = incListStr.split(';');
         if (sysIncludes) {
             incList = incList.concat(sysIncludes);
+        }
+        if (rteIncludes) {
+            incList = incList.concat(rteIncludes);
         }
 
         incList.forEach((path) => {
@@ -750,16 +773,6 @@ abstract class Target implements IView {
             });
 
         return new Promise<void>(_res => {
-            // console.log(`execCommand`, execCommand);
-            // execCommand.stdout.on('data', (data) => {
-            //     this.isTaskRunning = false;
-            //     console.log(`stdout:${data}`);
-            // });
-
-            // execCommand.stderr.on('data', (data) => {
-            //     this.isTaskRunning = false;
-            //     console.error(`stderr:${data}`);
-            // });
 
             execCommand.on('close', (code) => {
                 this.isTaskRunning = false;
@@ -768,25 +781,6 @@ abstract class Target implements IView {
                 channel.appendLine(`${iconv.decode(logst, 'cp936')}`);
             });
 
-            // execCommand.on('exit', (code, signal)=>{
-            //     console.log("exit", code, signal);
-            // });
-            /* setTimeout(() => {
-                child_process.exec(cmd, { encoding:'binary' }, (err, stdout, stderr) => {
-                    if (err) {
-                        channel.appendLine(`Error: ${iconv.decode(Buffer.from(err.message, 'binary'),'cp936')}`);
-                        channel.appendLine(`${iconv.decode(Buffer.from(stderr, 'binary'), 'cp936')}`);
-                        this.isTaskRunning = false;
-                        return;
-                    }
-                    this.isTaskRunning = false;
-                    channel.appendLine(iconv.decode(Buffer.from(stdout, 'binary'), 'cp936'));
-                }).once('exit', () => {
-                    this.isTaskRunning = false;
-                    const logst = readFileSync(this.uv4LogFile.path);
-                    channel.appendLine(`${iconv.decode(logst, 'cp936')}`);
-                });
-            }, 500); */
         });
     }
 
@@ -839,6 +833,7 @@ abstract class Target implements IView {
     protected abstract getSysDefines(target: any): string[];
     protected abstract getGroups(target: any): any[];
     protected abstract getSystemIncludes(target: any): string[] | undefined;
+    protected abstract getRTEIncludes(target: any, rteDom: any): string[] | undefined;
 
     protected abstract getOutputFolder(target: any): string | undefined;
     protected abstract parseRefLines(target: any, lines: string[]): string[];
@@ -916,6 +911,10 @@ class C51Target extends Target {
         return undefined;
     }
 
+    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
+        return undefined;
+    }
+
     protected getIncString(target: any): string {
         const target51 = target['TargetOption']['Target51']['C51'];
         return target51['VariousControls']['IncludePath'];
@@ -944,7 +943,7 @@ class C251Target extends Target {
         }
 
     }
-    
+
     protected getKeilPlatform(): string {
         return "C251";
     }
@@ -1000,6 +999,10 @@ class C251Target extends Target {
             }
             return list;
         }
+        return undefined;
+    }
+
+    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
         return undefined;
     }
 
@@ -1180,8 +1183,8 @@ class ArmTarget extends Target {
 
     private static armclangBuildinMacros: string[] | undefined;
 
-    constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any) {
-        super(prjInfo, uvInfo, targetDOM);
+    constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
+        super(prjInfo, uvInfo, targetDOM, rteDom);
         this.initArmclangMacros();
     }
 
@@ -1252,7 +1255,7 @@ class ArmTarget extends Target {
         }
     }
 
-    private  initArmclangMacros() {
+    private initArmclangMacros() {
         if (ArmTarget.armclangBuildinMacros === undefined) {
             const armClangPath = `${ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform())}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
             ArmTarget.armclangBuildinMacros = this.getArmClangMacroList(armClangPath);
@@ -1267,7 +1270,7 @@ class ArmTarget extends Target {
         }
     }
 
-    private  getArmClangMacroList(armClangPath: string): string[] {
+    private getArmClangMacroList(armClangPath: string): string[] {
         try {
             const cmdLine = CmdLineHandler.quoteString(armClangPath, '"')
                 + ' ' + ['--target=arm-arm-none-eabi', '-E', '-dM', '-', '<nul'].join(' ');
@@ -1302,6 +1305,127 @@ class ArmTarget extends Target {
             return [incDir.path];
         }
         return undefined;
+    }
+
+    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
+        if (!rteDom) { return undefined; }
+        //
+        const components = rteDom['components']['component'];
+        let incList: string[] = [];
+        const incMap: Map<string, string> = new Map();
+        const keilRootDir = ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform());
+
+        const packsDir = `${keilRootDir}${File.sep}ARM${File.sep}Packs`;;
+
+        const options = {
+            attributeNamePrefix: "@_",
+            attrNodeName: "attr", //default is 'false'
+            textNodeName: "#text",
+            ignoreAttributes: false,
+            ignoreNameSpace: false,
+            allowBooleanAttributes: false,
+            parseNodeValue: true,
+            parseAttributeValue: false,
+            trimValues: true,
+            cdataTagName: "__cdata", //default is 'false'
+            cdataPositionChar: "\\c",
+            parseTrueNumberOnly: false,
+            arrayMode: false, //"strict"
+            attrValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
+            tagValueProcessor: (val: any, tagName: any) => decode(val), //default is a=>a
+            stopNodes: ["parse-me-as-string"]
+        };
+        const parser = new XMLParser(options);
+        const cache = new Map<string, any>();
+        let pdscDom: any | undefined;
+        if (Array.isArray(components)) {
+            for (const component of components) {
+                const cClass = component['@_Cclass'];
+                const cGroup = component['@_Cgroup'];
+                const cSub = component['@_Csub'];
+                const cVendor = component['@_Cvendor'];
+                const cVersion = component['@_Cversion'];
+                const cCondition = component['@_condition'];
+                const cPackage = component['package'];
+                const pkgName = cPackage['@_name'];
+                const pkgVendor = cPackage['@_vendor'];
+                const pkgVersion = cPackage['@_version'];
+                const cRootDir = `${packsDir}${File.sep}${pkgVendor}${File.sep}${pkgName}${File.sep}${pkgVersion}`;
+                const pdscPath = `${cRootDir}${File.sep}${cVendor}.${pkgName}.pdsc`;
+                if (cache.has(pdscPath)) {
+                    pdscDom = cache.get(pdscPath);
+                } else {
+                    const pdsc = new File(pdscPath);
+                    if (pdsc.isExist() && pdsc.isFile()) {
+                        const pdscdoc = pdsc.read();
+                        pdscDom = parser.parse(pdscdoc);
+                        cache.set(pdscPath, pdscDom);
+                    } else {
+                        continue;
+                    }
+                }
+                if (pdscDom) {
+                    const pdscComponents = pdscDom['package']['components']['component'];
+                    if (Array.isArray(pdscComponents)) {
+                        let hasInc = false;
+                        for (const pdscComponent of pdscComponents) {
+                            const pdscClass = pdscComponent['@_Cclass'];
+                            const pdscGroup = pdscComponent['@_Cgroup'];
+                            const pdscCondition = pdscComponent['@_condition'];
+                            const pdscVersion = pdscComponent['@_Cversion'];
+                            const pdscSub = pdscComponent['@_Csub'];
+                            const pdscfileList = pdscComponent['files']['file'];
+                            let subEq = true;
+                            if (pdscSub !== undefined && cSub !== undefined) {
+                                subEq = pdscSub === cSub;
+                            } else {
+                                subEq = true;
+                            }
+
+                            if (pdscClass === cClass
+                                && pdscGroup === cGroup
+                                && pdscVersion === cVersion
+                                && pdscCondition === cCondition
+                                && subEq
+                                && Array.isArray(pdscfileList)) {
+                                for (const file of pdscfileList) {
+                                    const category = file['@_category'];
+                                    if (category === 'include') {
+                                        const name = file['@_name'];
+                                        incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${name}`), name);
+                                        hasInc = true;
+                                        break;
+                                    }
+
+                                    if (category === 'header') {
+                                        const name = file['@_name'] as string;
+                                        const pos = name.lastIndexOf("/");
+                                        const inc = name.substring(0, pos);
+                                        if (!incMap.has(inc)) {
+                                            incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${inc}`), inc);
+                                        }
+                                        hasInc = true;
+                                        break;
+                                    }
+                                }
+
+                            }
+                            if (hasInc) {
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        cache.clear();
+        incMap.forEach((_, key) => {
+            incList.push(key);
+        });
+        incMap.clear();
+        // console.log("incList", incList);
+        return incList;
+
     }
 
     protected getIncString(target: any): string {
