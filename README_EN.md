@@ -42,6 +42,12 @@ It provides syntax highlighting, code snippets for Keil projects, and supports c
  
  ![setting](./res/preview/setting.png)
 
+- From v1.7.3+ version, you only need to configure the Keil installation directory, simplifying the relevant configuration items (the default directory is: C:Keil_v5)
+- 
+- v1.8.0+ version is convenient for some users to set the C51 or C251 installation directory separately to add an optional setting, by default only need to set the MDK installation directory, only support: MDK, C51, C251; For details, refer to the example in Settings
+
+ ![setting](./res/preview/new_setting.png)
+
 ***
 
 ### Start 🏃‍♀️

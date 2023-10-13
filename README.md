@@ -39,12 +39,13 @@ vscode 上的 Keil 辅助工具，与 c/c++ 插件配合使用.
 
 2. 进入 Keil-Assistant 插件设置，~~设置好 keil 可执行文件 UV4.exe 的绝对路径~~ 
 - v1.7.2 以前的配置保持不变
-![setting](./res/preview/setting.png)
+ ![setting](./res/preview/setting.png)
 
 - v1.7.3+ 版本开始只需要配置Keil安装目录即可，简化相关配置项目(默认目录为:C:\Keil_v5)
-- V1.8.0+ 版本方便部分用户需要单独设置C51或C251安装目录增加一个可选项设置，默认只需要设置MDK的安装目录即可，仅支持: MDK, C51, C251; 详情参考设置中有示例
+- 
+- v1.8.0+ 版本方便部分用户需要单独设置C51或C251安装目录增加一个可选项设置，默认只需要设置MDK的安装目录即可，仅支持: MDK, C51, C251; 详情参考设置中有示例
   
-![setting](./res/preview/new_setting.png)
+ ![setting](./res/preview/new_setting.png)
 
 ---
 
