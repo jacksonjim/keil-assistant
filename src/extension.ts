@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { createHash } from 'crypto';
 import { EventEmitter } from 'events';
-import { normalize, dirname, resolve } from 'path';
+import { normalize, dirname, resolve, join } from 'path';
 import { spawn, execSync } from 'child_process';
 
 import { File } from './node_utility/File';
@@ -10,12 +10,11 @@ import { FileWatcher } from './node_utility/FileWatcher';
 import { Time } from './node_utility/Time';
 import { CmdLineHandler } from './CmdLineHandler';
 
-import { XMLParser, XMLValidator } from 'fast-xml-parser';
+import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'he';
-import { readFileSync, writeFileSync, createWriteStream } from 'fs';
+import { readdir, readFileSync, writeFileSync, createWriteStream, stat, readdirSync, readSync, readFile, statSync } from 'fs';
 
 import iconv = require('iconv-lite');
-import { stringify } from 'querystring';
 
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -29,8 +28,14 @@ export function activate(context: vscode.ExtensionContext) {
         channel = vscode.window.createOutputChannel('keil-vscode');
     }
 
-    ResourceManager.getInstance(context);
-
+    const testKeilRoot = ResourceManager.getInstance(context).getKeilRootDir("MDK");
+    stat(testKeilRoot, (err, stat) => {
+        if (err || !stat.isDirectory()) {
+            channel.show();
+            channel.appendLine(`Error: Please set keil root Path, ${err}`);
+            vscode.window.showErrorMessage(`Error: Please set keil root Path, ${err}`);
+        }
+    });
     const prjExplorer = new ProjectExplorer(context);
     const subscriber = context.subscriptions;
 
@@ -42,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
             canSelectFolders: false,
             canSelectMany: false,
             filters: {
-                'keilProjectXml': ['uvproj', 'uvprojx']
+                'keilProjectXml': ['uvproj', 'uvprojx', 'uvmpw']
             }
         });
 
@@ -1458,7 +1463,7 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
     private viewEvent: vscode.EventEmitter<IView>;
 
     private prjList: Map<string, KeilProject>;
-    private currentActiveProject: KeilProject | undefined;
+    private curActiveProject: KeilProject | undefined;
 
     constructor(context: vscode.ExtensionContext) {
         this.prjList = new Map();
@@ -1473,28 +1478,136 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
             const wsFilePath: string = vscode.workspace.workspaceFile && /^file:/.test(vscode.workspace.workspaceFile.toString()) ?
                 dirname(vscode.workspace.workspaceFile.fsPath) : vscode.workspace.workspaceFolders[0].uri.fsPath;
             const workspace = new File(wsFilePath);
+            // channel.show();
             if (workspace.isDir()) {
+                channel.show();
+                channel.appendLine('search uvprj[x] project file; >>>>>');
                 const excludeList = ResourceManager.getInstance().getProjectExcludeList();
+                let uvList: string[] = [];
 
-                let uvList = workspace.getList([/\.uvproj[x]?$/i], File.emptyFilter);
+                // Multiply project workspace
+                const uvmwList = await this.findProject(workspace.path, [/\.uvmpw$/i]);
+                if (uvmwList && uvmwList.length !== 0) {
+                    const options = {
+                        attributeNamePrefix: "@_",
+                        attrNodeName: "attr", //default is 'false'
+                        textNodeName: "#text",
+                        ignoreAttributes: false,
+                        ignoreNameSpace: false,
+                        allowBooleanAttributes: false,
+                        parseNodeValue: true,
+                        parseAttributeValue: false,
+                        trimValues: true,
+                        cdataTagName: "__cdata", //default is 'false'
+                        cdataPositionChar: "\\c",
+                        parseTrueNumberOnly: false,
+                        arrayMode: false, //"strict"
+                        // attrValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
+                        // tagValueProcessor: (val: any, tagName: any) => decode(val), //default is a=>a
+                        stopNodes: ["parse-me-as-string"]
+                    };
+                    const xmlParser = new XMLParser(options);
+                    uvmwList.forEach(uvwPath => {
+                        let stat = statSync(uvwPath);
+                        if (stat.isFile()) {
+                            const uvmpwXml = readFileSync(uvwPath);
+                            const uvmpw = xmlParser.parse(uvmpwXml);
+                            const projectList = uvmpw['ProjectWorkspace']['project'];
+                            if (Array.isArray(projectList)) {
+                                uvList = projectList.map<string>(p => {
+                                    let path = p['PathAndName'] as string;
+                                    if (path.indexOf('.\\') !== -1) {
+                                        path = path.replace('.\\', '');
+                                        path = `${workspace.path}${File.sep}${path}`;
+                                    }
+                                    return path;
+                                });
+                            }
+                        }
+                    });
+                } else {
+                    uvList = await this.findProject(workspace.path, [/\.uvproj[x]?$/i]);
+                    // uvList = workspace.getList([/\.uvproj[x]?$/i], File.emptyFilter);
+                }
+
+
                 // uvList.concat() //本地文件列表
                 ResourceManager.getInstance().getProjectFileLocationList().forEach(
                     str => {
-                        uvList = uvList.concat(workspace.path2File(str, [/\.uvproj[x]?$/i], File.emptyFilter));
+                        // uvList = uvList.concat(workspace.path2File(str, [/\.uvproj[x]?$/i], File.emptyFilter));
+                        uvList.push(str);
                     }
                 );
-                uvList.filter((file) => { return !excludeList.includes(file.name); });
-                for (const uvFile of uvList) {
+                // uvList.filter((file) => { return !excludeList.includes(file.name); });
+                uvList.filter((path) => {
+                    const name = path.substring(path.lastIndexOf('.'));
+                    return !excludeList.includes(name);
+                });
+
+                // console.log("worckspace", uvList, uvmwList);
+
+                for (const uvPath of uvList) {
                     try {
-                        // console.log('prj uvFile start', uvFile);
-                        await this.openProject(uvFile.path);
+                        // console.log('prj uvFile start', uvPath);
+                        channel.appendLine(uvPath);
+                        await this.openProject(uvPath);
                     } catch (error) {
-                        console.log(`Error: open project ${error}`);
-                        vscode.window.showErrorMessage(`open project: '${uvFile.name}' failed !, msg: ${(<Error>error).message}`);
+                        channel.appendLine(`Error: open project ${error}`);
+                        vscode.window.showErrorMessage(`open project: '${uvPath}' failed !, msg: ${(<Error>error).message}`);
                     }
                 }
+            } else {
+                channel.appendLine(`Error: this assistant working in folder}`);
             }
         }
+    }
+
+    async findProject(dir: string, fileFilter?: RegExp[]): Promise<string[]> {
+        const list: string[] = [];
+        readdirSync(dir).filter((val) => {
+            const path = join(dir, val);
+            const stat = statSync(path);
+
+            if (stat.isDirectory()) {
+                return val;
+            }
+            if (fileFilter) {
+                const name = val.substring(val.lastIndexOf('.'));
+                let hasFile = false;
+                for (const reg of fileFilter) {
+                    if (reg.test(name)) {
+                        hasFile = true;
+                        break;
+                    }
+                }
+                if (hasFile) {
+                    return val;
+                }
+            }
+
+        }).forEach(async fp => {
+            if (fp !== '.' && fp !== '..') {
+                const path = join(dir, fp);
+                const stat = statSync(path);
+                if (stat.isFile()) {
+                    const name = path.substring(path.lastIndexOf('.'));
+                    if (fileFilter) {
+                        for (const reg of fileFilter) {
+                            if (reg.test(name)) {
+                                list.push(path);
+                                break;
+                            }
+                        }
+                    } else {
+                        list.push(path);
+                    }
+                } else {
+                    list.push(...await this.findProject(path, fileFilter));
+                }
+
+            }
+        });
+        return list;
     }
 
     async openProject(path: string): Promise<KeilProject | undefined> {
@@ -1505,9 +1618,9 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
             nPrj.on('dataChanged', () => this.updateView());
             this.prjList.set(nPrj.prjID, nPrj);
 
-            if (this.currentActiveProject === undefined) {
-                this.currentActiveProject = nPrj;
-                this.currentActiveProject.active();
+            if (this.curActiveProject === undefined) {
+                this.curActiveProject = nPrj;
+                this.curActiveProject.active();
             }
 
             this.updateView();
@@ -1526,14 +1639,14 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
         }
     }
 
+
     async activeProject(view: IView) {
+        this.curActiveProject?.deactive();
         const project = this.prjList.get(view.prjID);
-        if (project) {
-            this.currentActiveProject?.deactive();
-            this.currentActiveProject = project;
-            this.currentActiveProject?.active();
-            this.updateView(view);
-        }
+        project?.active();
+        this.curActiveProject = project;
+        this.updateView();
+
     }
 
     async switchTargetByProject(view: IView) {
@@ -1551,14 +1664,14 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
     }
 
     async statusBarSwitchTargetByProject() {
-        if (this.currentActiveProject) {
-            const tList = this.currentActiveProject?.getTargets();
+        if (this.curActiveProject) {
+            const tList = this.curActiveProject?.getTargets();
             const targetName = await vscode.window.showQuickPick(tList.map((ele) => { return ele.targetName; }), {
                 canPickMany: false,
                 placeHolder: 'please select a target name for keil project'
             });
             if (targetName) {
-                this.currentActiveProject?.setActiveTarget(targetName);
+                this.curActiveProject?.setActiveTarget(targetName);
             }
         }
     }
@@ -1576,8 +1689,8 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
                 }
             }
         } else { // get active target
-            if (this.currentActiveProject) {
-                return this.currentActiveProject.getActiveTarget();
+            if (this.curActiveProject) {
+                return this.curActiveProject.getActiveTarget();
             } else {
                 vscode.window.showWarningMessage('Not found any active project !');
             }
@@ -1585,7 +1698,7 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
     }
 
     updateView(v?: IView) {
-        updateStatusBarItem(this.currentActiveProject?.activeTargetName);
+        updateStatusBarItem(this.curActiveProject?.activeTargetName);
         this.viewEvent.fire(v!!);
     }
 

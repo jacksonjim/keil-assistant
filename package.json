@@ -2,7 +2,7 @@
   "name": "keil-vscode-assistant",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "publisher": "jacksonjim",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
   "keywords": [
@@ -34,6 +34,12 @@
     "email": "jacksonjim@foxmail.com"
   },
   "contributes": {
+    "viewsWelcome": [
+      {
+        "view":"project",
+        "contents": "keil project not found [learn more](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[Open project](command:explorer.open)"
+      }
+    ],
     "configuration": [
       {
         "title": "%keil-assistant.contributes.conf.title%",
@@ -54,7 +60,8 @@
             "markdownDescription": "%keil-assistant.contributes.conf.props.project.excludeList.description%",
             "default": [
               "template.uvproj",
-              "template.uvprojx"
+              "template.uvprojx",
+              "template.uvmpw"
             ]
           },
           "KeilAssistant.Project.FileLocationList": {

@@ -2,6 +2,12 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.1]
+- Fixed:
+- #3 search sub folder project file
+- #10 suppert *.unmpw Project workspace 
+***
+
 ## [v1.8.0]
 - Feature: 
 - #8 keil MDK/C51/C251 alone set Home PATH
