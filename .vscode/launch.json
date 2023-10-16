@@ -5,33 +5,111 @@
 {
 	"version": "0.2.0",
 	"configurations": [
+
+		
 		{
 			"name": "Run Extension",
 			"type": "extensionHost",
 			"request": "launch",
 			"args": [
+				"--no-standbox",
+				"--disable-update",
+				"--skip-welcome",
+				"--skip-release-notes",
+				"--disable-workspace-trust",
 				"--extensionDevelopmentPath=${workspaceFolder}"
 			],
+			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceFolder}/dist/**/*.js"
+				"${workspaceFolder}/dist/**"
 			],
-			"preLaunchTask": "${defaultBuildTask}"
+			"preLaunchTask": "watch"
+			// "preLaunchTask": "watch"
+		},
+		{
+			"name": "Run Extension-Select Workspace",
+			"type": "extensionHost",
+			"request": "launch",
+			"args": [
+				"--no-sandbox",
+				"--disable-updates",
+				"--skip-welcome",
+				"--skip-release-notes",
+				"--disable-workspace-trust",
+				"--extensionDevelopmentPath=${workspaceFolder}",
+				"${input:pickWorkspace}"
+			],
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/**/*.js",
+				"!**/node_modules/**"
+			],
+			"preLaunchTask": "watch"
 		},
 		{
 			"name": "Extension Tests",
 			"type": "extensionHost",
 			"request": "launch",
 			"runtimeExecutable": "${execPath}",
+			"env": {
+				"SCENARIO": "${input:pickScenario}"
+			},
 			"args": [
+				"--no-sandbox",
+				"--disable-updates",
+				"--skip-welcome",
+				"--skip-release-notes",
 				"--disable-extensions",
 				"--extensionDevelopmentPath=${workspaceFolder}",
-				"--extensionTestsPath=${workspaceFolder}/out/test/suite/index"
+				"--extensionTestsPath=${workspaceFolder}/dist/test/suite/index",
+				"--scenairo=${input:pickScenario}",
+				"${input:pickWorkspace}"
+			],
+			"sourceMaps": true,
+			"outFiles": [
+				"${workspaceFolder}/dist/**"
+			],
+			"preLaunchTask": "watch"
+		},
+		{
+			"name": "MochaTest",
+			"type": "node",
+			"request": "attach",
+			"port": 9229,
+			"continueOnAttach": true,
+			"autoAttachChildProcesses": false,
+			"skipFiles": [
+				"<node_internals>/**"
 			],
 			"outFiles": [
-				"${workspaceFolder}/out/**/*.js",
-				"${workspaceFolder}/dist/**/*.js"
-			],
-			"preLaunchTask": "tasks: watch-tests"
+				"${workspaceFolder}/dist/**/*.js",
+				"!**/node_modules/**"
+			]
+		}
+	],
+	"inputs": [
+		{
+			"type": "pickString",
+			"id": "pickScenario",
+			"description": "Select which scenairo to debug VSCode test.",
+			"options": [
+				{
+					"label": "SimpleProject",
+					"value": "${workspaceFolder}/test/scenairo/simple/"
+				}
+			]
+		},
+		{
+			"type": "pickString",
+			"id": "pickWorkspace",
+			"description": "Select which workspace scenario to debug VSCode",
+			"default": "-n",
+			"options": [
+				{
+					"label": "(Debug with new window)   ",
+					"value": "-n"
+				}
+			]
 		}
 	]
 }

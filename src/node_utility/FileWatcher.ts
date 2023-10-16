@@ -45,12 +45,12 @@ export class FileWatcher {
                 switch (event) {
                     case 'rename':
                         if (this.onRename) {
-                            this.onRename(this.isDir ? File.fromArray([this.file.path, filename]) : this.file);
+                            this.onRename(this.isDir ? File.fromArray([this.file.path, filename!]) : this.file);
                         }
                         break;
                     case 'change':
                         if (this.onChanged) {
-                            this.onChanged(this.isDir ? File.fromArray([this.file.path, filename]) : this.file);
+                            this.onChanged(this.isDir ? File.fromArray([this.file.path, filename!]) : this.file);
                         }
                         break;
                 }

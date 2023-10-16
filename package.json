@@ -2,11 +2,18 @@
   "name": "keil-vscode-assistant",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.8.2",
+  "version": "1.8.3",
   "publisher": "jacksonjim",
+  "icon": "res/icons/icon.png",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
+  "readme": "README.md",
+  "license": "SEE LICENSE IN LICENSE",
   "keywords": [
     "keil",
+    "embedded",
+    "uVision",
+    "microcontroller",
+    "CMSIS",
     "mdk",
     "c51",
     "c251",
@@ -15,16 +22,16 @@
   ],
   "homepage": "https://github.com/jacksonjim/keil-assistant",
   "engines": {
-    "vscode": "^1.74.0"
+    "vscode": "^1.67.0"
   },
   "categories": [
     "Programming Languages",
     "Snippets",
-    "Other"
+    "Other",
+    "Extension Packs"
   ],
   "activationEvents": [],
-  "icon": "res/icons/icon.png",
-  "main": "./dist/extension.js",
+  "main": "./dist/src/extension.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jacksonjim/keil-assistant.git"
@@ -33,6 +40,13 @@
     "url": "https://github.com/jacksonjim/keil-assistant/issues",
     "email": "jacksonjim@foxmail.com"
   },
+  "extensionPack": [
+		"ms-vscode.cpptools",
+		"ms-vscode.cpptools-themes"
+  ],
+  "extensionKind": [
+		"workspace"
+	],
   "contributes": {
     "viewsWelcome": [
       {
@@ -322,17 +336,24 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run package",
-    "compile": "webpack",
-    "watch": "webpack --watch",
-    "setup": "npm install",
-    "package": "webpack --mode production --devtool hidden-source-map",
-    "compile-tests": "tsc -p . --outDir out",
-    "watch-tests": "tsc -p . -w --outDir out",
-    "pretest": "npm run compile-tests && npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
+    "setup": "yarn install",
+    "build1":"tsc --build tsconfig.json",
+    "build":"webpack --mode production && yarn lint",
+    "compile": "webpack --mode production --env vscode_nls",
+    "compile-dev": "webpack --mode development",
+    "compile-watch": "webpack --mode production --env vscode_nls --watch --progress",
+    "compile-dev-watch": "webpack --mode development --watch --progress",
+    "compile-unit-test": "tsc --build test.tsconfig.json",
+    "compile-watch-unit-test": "tsc --build test.tsconfig.json --watch",
+    "watch": "tsc --build tsconfig.json --watch",
+    "compile-tests": "tsc -p test.tsconfig.json --outDir out",
+    "watch-tests": "tsc -p test.tsconfig.json -w --outDir out",
+    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "lint": "eslint src --ext .ts,.tsx",
     "test": "node ./out/test/runTest.js",
-    "vsce-packge": "vsce package",
+    "webpack":"yarn install && tsc --build tsconfig.json && webpack --mode production --env vscode_nls",
+    "vscode:prepublish": "yarn run webpack",
+    "vsce-packge": "vsce package --no-yarn",
     "vsce-publish": "vsce publish"
   },
   "devDependencies": {
@@ -340,12 +361,13 @@
     "@types/he": "^1.2.1",
     "@types/mocha": "^10.0.1",
     "@types/node": "^16.x",
-    "@types/vscode": "^1.74.0",
+    "@types/vscode": "^1.67.0",
     "@typescript-eslint/eslint-plugin": "^6.7.5",
     "@typescript-eslint/parser": "^6.7.5",
+    "@vscode/dts": "^0.4.0",
     "@vscode/l10n-dev": "^0.0.29",
-    "@vscode/test-electron": "^2.3.5",
     "@vscode/vsce": "^2.21.1",
+    "@vscode/test-electron":"^2.3.5",
     "eslint": "^8.51.0",
     "fast-xml-parser": "^4.3.2",
     "glob": "^8.1.0",

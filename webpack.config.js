@@ -1,5 +1,4 @@
 //@ts-check
-
 'use strict';
 
 const path = require('path');
@@ -10,13 +9,16 @@ const path = require('path');
 /** @type WebpackConfig */
 const config = {
     target: 'node',
-    mode: 'none',
+    // mode: 'none',
     entry: './src/extension.ts',
     output: {
-        path: path.resolve(__dirname, 'dist'),
+        path: path.resolve(__dirname, 'dist', 'src'),
         filename: 'extension.js',
-        libraryTarget: 'commonjs2',
-        // devtoolModuleFilenameTemplate: '../[resource-path]'
+        libraryTarget: "commonjs2",
+        devtoolModuleFilenameTemplate: "../[resource-path]"
+    },
+    node: {
+        __dirname: false, // leave the __dirname behavior intact
     },
     devtool: 'source-map',
     externals: {
@@ -25,7 +27,8 @@ const config = {
     },
     resolve: {
         // support reading TypeScript and JavaScript files, 📖 -> https://github.com/TypeStrong/ts-loader
-        extensions: ['.ts', '.js']
+        extensions: ['.ts', '.js'],
+        mainFields: ['main', 'module']
     },
     module: {
         rules: [{
@@ -33,13 +36,22 @@ const config = {
             exclude: /node_modules/,
             use: [{
                 loader: 'ts-loader',
-                // options: {
-                //     compilerOptions: {
-                //         "module": "es6"
-                //     }
-                // }
+                options: {
+                    compilerOptions: {
+                        "inlineSorceMap": true,
+                    }
+                }
             }]
+        }, {
+            test: /.node$/,
+            loader: 'node-loader'
         }]
+    },
+    optimization: {
+        minimize: false
+    },
+    stats: {
+        warnings: false
     },
     infrastructureLogging: {
         level: "log", // enables logging required for problem matchers
@@ -47,4 +59,16 @@ const config = {
 };
 
 // export default [config];
-module.exports = config;
+module.exports = (env) => {
+    // if (env.vscode_nls) {
+    //     // rewrite nls cal when being asked for 
+    //     //@ts-ignore
+    //     config.module?.rules?.unshift({
+    //         loader: 'vscode-nls-dev/lib/webpack-loader',
+    //         options: {
+    //             base: `${__dirname}/src`
+    //         }
+    //     })
+    // }
+    return config;
+};

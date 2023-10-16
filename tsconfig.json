@@ -1,28 +1,28 @@
 {
   "compilerOptions": {
     "module": "commonjs",
-    "target": "ES2020",
-    "outDir": "out",
-    // "jsx": "react",
+    "target": "ES2022",
+    "outDir": "dist",
     "lib": [
-      "ES2020"
+      "ES2022",
+      "DOM"
     ],
-    // "allowJs": true,
-    // "moduleResolution": "node",
-    "sourceMap": true,
-    "rootDir": "src",
+    "inlineSourceMap": true,
+    "rootDir": ".",
+    "removeComments": true,
+    "noUnusedLocals": true,
+    "strictNullChecks": true,
     "strict": true, /* enable all strict type-checking options */
-    // "esModuleInterop": true,
-    // "typeRoots": ["node_modules/@types"]
-    // "skipLibCheck":true
-    /* Additional Checks */
-    // "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
-    // "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
-    // "noUnusedParameters": true,  /* Report errors on unused parameters. */
+    "forceConsistentCasingInFileNames": true
   },
+  "include": [
+    "test/**/*.ts",
+    "./vscode*.d.ts",
+    "src/types/*.d.ts",
+    "src/**/*.ts"
+  ],
   "exclude": [
-    "node_modules",
-    "**/vscode.d.ts",
-    ".vscode-test"
+    "node_modules/@types/eslint-scope/node_modules/@types/eslint/index.d.ts",
+    "node_modules"
   ]
 }

@@ -4,9 +4,20 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
+			"label": "compile",
+			"type": "npm",
+			"script": "compile",
+			"problemMatcher":"$tsc",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			}
+		},
+		{
+			"label": "watch",
 			"type": "npm",
 			"script": "watch",
-			"problemMatcher": "$ts-webpack-watch",
+			"problemMatcher":"$tsc-watch",
 			"isBackground": true,
 			"presentation": {
 				"reveal": "never",

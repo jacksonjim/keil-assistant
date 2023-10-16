@@ -12,7 +12,7 @@ import { CmdLineHandler } from './CmdLineHandler';
 
 import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'he';
-import { readdir, readFileSync, writeFileSync, createWriteStream, stat, readdirSync, readSync, readFile, statSync } from 'fs';
+import { readFileSync, writeFileSync, createWriteStream, stat, readdirSync, statSync } from 'fs';
 
 import iconv = require('iconv-lite');
 
@@ -646,7 +646,7 @@ abstract class Target implements IView {
         const sysIncludes = this.getSystemIncludes(this.targetDOM);
         const rteIncludes = this.getRTEIncludes(this.targetDOM, this.rteDom);
 
-        const targetName = this.targetDOM['TargetName'];
+        // const targetName = this.targetDOM['TargetName'];
 
         // set includes
         this.includes.clear();
@@ -1470,7 +1470,7 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
         this.viewEvent = new vscode.EventEmitter();
         this.onDidChangeTreeData = this.viewEvent.event;
         context.subscriptions.push(vscode.window.registerTreeDataProvider('project', this));
-        context.subscriptions.push(vscode.commands.registerCommand(this.itemClickCommand, (item) => this.onItemClick(item)));
+        context.subscriptions.push(vscode.commands.registerCommand(this.itemClickCommand, (item: IView) => this.onItemClick(item)));
     }
 
     async loadWorkspace() {
@@ -1741,7 +1741,7 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
         }
     }
 
-    getTreeItem(element: IView): vscode.TreeItem | Thenable<vscode.TreeItem> {
+    getTreeItem(element: IView): vscode.TreeItem {
 
         const res = new vscode.TreeItem(element.label);
 
