@@ -2,7 +2,7 @@
   "name": "keil-vscode-assistant",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.8.1",
+  "version": "1.8.2",
   "publisher": "jacksonjim",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
   "keywords": [

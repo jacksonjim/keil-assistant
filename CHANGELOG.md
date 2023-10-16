@@ -2,6 +2,10 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.2]
+- Fixed: package signed error
+***
+
 ## [v1.8.1]
 - Fixed:
 - #3 search sub folder project file
@@ -10,7 +14,7 @@ All notable changes to the "keil-assistant" extension will be documented in this
 
 ## [v1.8.0]
 - Feature: 
-- #8 keil MDK/C51/C251 alone set Home PATH
+- #8 keil MDK/C51/C251 alone set Home PATH, Must reset PATH in settings
 - setting show with l10n language
 - #9 Support keil MDK RTE includes
 ***
