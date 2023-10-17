@@ -49,6 +49,27 @@
   "extensionKind": [
     "workspace"
   ],
+  "scripts": {
+    "setup": "yarn install",
+    "build1": "tsc --build tsconfig.json",
+    "build": "webpack --mode production && yarn lint",
+    "compile": "webpack --mode production",
+    "compile-dev": "webpack --mode development",
+    "compile-watch": "webpack --mode production --watch --progress",
+    "compile-dev-watch": "webpack --mode development --watch --progress",
+    "compile-unit-test": "tsc --build test.tsconfig.json",
+    "compile-watch-unit-test": "tsc --build test.tsconfig.json --watch",
+    "watch": "tsc --build tsconfig.json --watch",
+    "compile-tests": "tsc -p test.tsconfig.json --outDir out",
+    "watch-tests": "tsc -p test.tsconfig.json -w --outDir out",
+    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "node ./out/test/runTest.js",
+    "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
+    "vscode:prepublish": "yarn run webpack",
+    "vsce-packge": "vsce package --no-yarn",
+    "vsce-publish": "vsce publish --no-yarn"
+  },
   "contributes": {
     "viewsWelcome": [
       {
@@ -337,27 +358,7 @@
       }
     ]
   },
-  "scripts": {
-    "setup": "yarn install",
-    "build1": "tsc --build tsconfig.json",
-    "build": "webpack --mode production && yarn lint",
-    "compile": "webpack --mode production",
-    "compile-dev": "webpack --mode development",
-    "compile-watch": "webpack --mode production --watch --progress",
-    "compile-dev-watch": "webpack --mode development --watch --progress",
-    "compile-unit-test": "tsc --build test.tsconfig.json",
-    "compile-watch-unit-test": "tsc --build test.tsconfig.json --watch",
-    "watch": "tsc --build tsconfig.json --watch",
-    "compile-tests": "tsc -p test.tsconfig.json --outDir out",
-    "watch-tests": "tsc -p test.tsconfig.json -w --outDir out",
-    "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
-    "lint": "eslint src --ext .ts,.tsx",
-    "test": "node ./out/test/runTest.js",
-    "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
-    "vscode:prepublish": "yarn run webpack",
-    "vsce-packge": "vsce package --no-yarn",
-    "vsce-publish": "vsce publish"
-  },
+  
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/he": "^1.2.1",

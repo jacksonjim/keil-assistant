@@ -1,6 +1,6 @@
 {
-    "displayName": "Keil VSCode 助理",
-    "description": "Keil uVision 助理",
+    "displayName": "Keil 助理",
+    "description": "Keil uVision 助理方便處理uVision專案，但是不會更改原理項目檔配置，常用功能有編寫代碼、編譯、重新編譯，下載等功能",
     "keil-assistant.contributes.conf.title": "Keil uVision 助理",
     "keil-assistant.contributes.views.explorer.name": "Keil uVision 專案",
     "keil-assistant.contributes.conf.props.mdk.home.description": "Keil uVision (MDK/C51/C251) 安裝目錄，必填項; 預設值: C:\\Keil_v5",

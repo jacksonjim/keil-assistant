@@ -1,6 +1,6 @@
 {
-    "displayName": "Keil VSCode 助理",
-    "description": "Keil uVision 助理",
+    "displayName": "Keil 助理",
+    "description": "Keil uVision 助理方便处理uVision项目，但是不会更改原理项目文件配置，常用功能有编写代码、编译、重新编译，下载等功能",
     "keil-assistant.contributes.conf.title": "Keil uVision 助理",
     "keil-assistant.contributes.views.explorer.name": "Keil uVision 项目",
     "keil-assistant.contributes.conf.props.mdk.home.description": "Keil uVision (MDK/C51/C251) 安装目录, 必填项  默认值: C:\\Keil_v5",

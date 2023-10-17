@@ -1,6 +1,6 @@
 {
-    "displayName": "Keil VSCode Assistant",
-    "description": "An assistant for Keil uVision",
+    "displayName": "Keil uVision Assistant",
+    "description": "Keil uVision Assistant is convenient for working with uVision projects, but does not change the principle project file configuration, and common functions include writing code, compiling, recompiling, downloading and other functions",
     "keil-assistant.contributes.conf.title": "Keil Assistant",
     "keil-assistant.contributes.views.explorer.name": "Keil uVision Project",
     "keil-assistant.contributes.conf.props.mdk.home.description": "Keil (MDK/C51/C251 All in one) Installation directory, must not empty ; default: C:\\Keil_v5",
