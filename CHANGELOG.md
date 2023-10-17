@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.3]
+- Feature:
+- Added support for regular extension packs
+***
+
 ## [v1.8.2]
 - Fixed: package signed error
 ***

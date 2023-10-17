@@ -41,16 +41,18 @@
     "email": "jacksonjim@foxmail.com"
   },
   "extensionPack": [
-		"ms-vscode.cpptools",
-		"ms-vscode.cpptools-themes"
+    "ms-vscode.cpptools",
+    "ms-vscode.cpptools-themes",
+    "jeff-hykin.better-cpp-syntax",
+    "dan-c-underwood.arm"
   ],
   "extensionKind": [
-		"workspace"
-	],
+    "workspace"
+  ],
   "contributes": {
     "viewsWelcome": [
       {
-        "view":"project",
+        "view": "project",
         "contents": "keil project not found [learn more](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[Open project](command:explorer.open)"
       }
     ],
@@ -337,11 +339,11 @@
   },
   "scripts": {
     "setup": "yarn install",
-    "build1":"tsc --build tsconfig.json",
-    "build":"webpack --mode production && yarn lint",
-    "compile": "webpack --mode production --env vscode_nls",
+    "build1": "tsc --build tsconfig.json",
+    "build": "webpack --mode production && yarn lint",
+    "compile": "webpack --mode production",
     "compile-dev": "webpack --mode development",
-    "compile-watch": "webpack --mode production --env vscode_nls --watch --progress",
+    "compile-watch": "webpack --mode production --watch --progress",
     "compile-dev-watch": "webpack --mode development --watch --progress",
     "compile-unit-test": "tsc --build test.tsconfig.json",
     "compile-watch-unit-test": "tsc --build test.tsconfig.json --watch",
@@ -351,7 +353,7 @@
     "pretest": "yarn run compile-tests && yarn run compile && yarn run lint",
     "lint": "eslint src --ext .ts,.tsx",
     "test": "node ./out/test/runTest.js",
-    "webpack":"yarn install && tsc --build tsconfig.json && webpack --mode production --env vscode_nls",
+    "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
     "vscode:prepublish": "yarn run webpack",
     "vsce-packge": "vsce package --no-yarn",
     "vsce-publish": "vsce publish"
@@ -367,7 +369,7 @@
     "@vscode/dts": "^0.4.0",
     "@vscode/l10n-dev": "^0.0.29",
     "@vscode/vsce": "^2.21.1",
-    "@vscode/test-electron":"^2.3.5",
+    "@vscode/test-electron": "^2.3.5",
     "eslint": "^8.51.0",
     "fast-xml-parser": "^4.3.2",
     "glob": "^8.1.0",
