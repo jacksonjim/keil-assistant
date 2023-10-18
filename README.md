@@ -3,7 +3,7 @@
 ![GitHub package.json version (branch)](https://img.shields.io/github/package-json/v/jacksonjim/keil-assistant/master)
 ![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/jacksonjim.keil-vscode-assistant?logo=visualstudiocode)
 ![GitHub release (with filter)](https://img.shields.io/github/v/release/jacksonjim/keil-assistant?display_name=release&logo=visualstudiocode)
-[![Build Linux & Windows](https://github.com/jacksonjim/keil-assistant/workflows/Build%20for%20Linux%20&%20Windows/badge.svg)](https://github.com/jacksonjim/keil-assistant)
+[![Build Linux & Windows](https://github.com/jacksonjim/keil-assistant/workflows/Build%20vsce%20package/badge.svg)](https://github.com/jacksonjim/keil-assistant)
 <!--[![Build MacOS](https://github.com/jacksonjim/keil-assistant/workflows/Build%20for%20MacOS/badge.svg)](https://github.com/jacksonjim/keil-assistant)-->
 
 </div>
