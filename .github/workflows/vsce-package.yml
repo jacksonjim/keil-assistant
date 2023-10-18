@@ -39,7 +39,6 @@ jobs:
     - name: Move
       run: mv keil-vscode-assistant-${{ /*/ }}.vsix pkg-dist/
 
-
     - uses: actions/upload-artifact@v3
       with:
         name: build-result
@@ -53,11 +52,6 @@ jobs:
         draft: true
         append_body: true
         files: |
-            pkg-dist/fetch-github-hosts_${{ env.RELEASE_VERSION }}_windows_amd64.zip
-            pkg-dist/fetch-github-hosts_${{ env.RELEASE_VERSION }}_windows_386.zip
-            pkg-dist/fetch-github-hosts_${{ env.RELEASE_VERSION }}_linux_386.tar.xz
-            pkg-dist/fetch-github-hosts_${{ env.RELEASE_VERSION }}_linux_amd64.tar.xz
-            pkg-dist/fetch-github-hosts_${{ env.RELEASE_VERSION }}_linux_arm.tar.xz
-            pkg-dist/fetch-github-hosts_${{ env.RELEASE_VERSION }}_linux_arm64.tar.xz
+            pkg-dist/keil-vscode-assistant-${{ env.RELEASE_VERSION }}.vsix
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
