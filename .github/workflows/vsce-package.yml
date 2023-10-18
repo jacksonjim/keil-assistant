@@ -22,7 +22,8 @@ jobs:
           fetch-depth: 0
 
     - name: Set env
-      run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+      # run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+      run: echo "VERSION=$(grep version package.json | sed -r 's/",/"/' |  sed 's/"//g' | sed 's/[[:space:]]*version:[[:space:]]*//1')" >> $GITHUB_ENV
 
     - name: Use Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v3
@@ -54,6 +55,6 @@ jobs:
         draft: true
         append_body: true
         files: |
-            pkg-dist/keil-vscode-assistant-${{ env.RELEASE_VERSION }}.vsix
+            pkg-dist/keil-vscode-assistant-${{ env.VERSION }}.vsix
       env:
         GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
