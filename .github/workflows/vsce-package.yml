@@ -54,4 +54,4 @@ jobs:
         files: |
             pkg-dist/keil-vscode-assistant-${{ env.RELEASE_VERSION }}.vsix
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
