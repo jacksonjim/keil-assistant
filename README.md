@@ -3,8 +3,8 @@
 
 ![LOGO](res/icons/icon.png)
  
-![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/jacksonjim.keil-vscode-assistant?logo=visualstudiocode)
-![GitHub release (with filter)](https://img.shields.io/github/v/release/jacksonjim/keil-assistant?display_name=release&logo=github)
+[![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/jacksonjim.keil-vscode-assistant?logo=visualstudiocode)](https://github.com/jacksonjim/keil-assistant)
+[![GitHub release (with filter)](https://img.shields.io/github/v/release/jacksonjim/keil-assistant?display_name=release&logo=github)](https://github.com/jacksonjim/keil-assistant)
 [![Build Linux & Windows](https://github.com/jacksonjim/keil-assistant/workflows/Build%20vsce%20package/badge.svg)](https://github.com/jacksonjim/keil-assistant)
 
 </div>
