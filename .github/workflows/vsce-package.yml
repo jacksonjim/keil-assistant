@@ -1,6 +1,8 @@
 name: Build vsce package
 
 on:
+  workflow_dispatch:
+  
   push:
     tags:
       - v*
