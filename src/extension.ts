@@ -12,9 +12,10 @@ import { CmdLineHandler } from './CmdLineHandler';
 
 import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'he';
-import { readFileSync, writeFileSync, createWriteStream, stat, readdirSync, statSync } from 'fs';
+import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync } from 'fs';
 
 import iconv = require('iconv-lite');
+import { LogFileWatcher } from './node_utility/LogFileWatcher';
 
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -532,6 +533,7 @@ abstract class Target implements IView {
     protected defines: Set<string>;
 
     private uv4LogFile: File;
+    private uv4LogFileWatcher: LogFileWatcher;
     private uv4LogLockFileWatcher: FileWatcher;
     private isTaskRunning: boolean = false;
 
@@ -550,6 +552,7 @@ abstract class Target implements IView {
         this.defines = new Set();
         this.fGroups = [];
         this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + 'uv4.log');
+        this.uv4LogFileWatcher = new LogFileWatcher(this.uv4LogFile.path);
         this.uv4LogLockFileWatcher = new FileWatcher(new File(this.uv4LogFile.path + '.lock'));
 
         if (!this.uv4LogLockFileWatcher.file.isFile()) { // create file if not existed
@@ -568,7 +571,10 @@ abstract class Target implements IView {
 
             this.uv4LogLockFileWatcher.watch();
         });
+
+        this.uv4LogFileWatcher.onChanged = (buf) => this.updateLogOutput(buf);
     }
+
 
     on(event: 'dataChanged', listener: () => void): void;
     on(event: any, listener: () => void): void {
@@ -584,6 +590,11 @@ abstract class Target implements IView {
         } else {
             return new ArmTarget(prjInfo, uvInfo, targetDOM, rteDom);
         }
+    }
+
+    updateLogOutput(text: Buffer) {
+        // console.log(iconv.decode(text, 'cp936'));
+        channel.append(`${iconv.decode(text, 'cp936')}`);
     }
 
     private getDefCppProperties(): any {
@@ -760,10 +771,12 @@ abstract class Target implements IView {
             return;
         }
         this.isTaskRunning = true;
+        this.uv4LogFileWatcher.watch();
+
         writeFileSync(this.uv4LogFile.path, '');
         channel.clear();
-        channel.show();
         channel.appendLine(`Start to ${name} target ${this.label}`);
+        channel.show();
 
         const execCommand = spawn(`${ResourceManager.getInstance().getKeilUV4Path(this.getKeilPlatform())}`,
             [
@@ -775,15 +788,18 @@ abstract class Target implements IView {
             {
                 cwd: resolve(__dirname, "./"),
                 stdio: ['pipe', 'pipe', 'pipe']
-            });
+            }
+        );
 
         return new Promise<void>(_res => {
 
             execCommand.on('close', (code) => {
                 this.isTaskRunning = false;
-                console.log(`on close code:${code}`);
-                const logst = readFileSync(this.uv4LogFile.path);
-                channel.appendLine(`${iconv.decode(logst, 'cp936')}`);
+                // console.log(`on close code:${code}`);
+                // const logst = readFileSync(this.uv4LogFile.path);
+                channel.appendLine(`Build Finished!`);
+                // channel.appendLine(`${iconv.decode(logst, 'cp936')}`);
+                this.uv4LogFileWatcher.close();
             });
 
         });

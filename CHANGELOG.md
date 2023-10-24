@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.4]
+- Fixed:
+- #12 optimize Kei log out show
+***
+
 ## [v1.8.3]
 - Feature:
 - Added support for regular extension packs
