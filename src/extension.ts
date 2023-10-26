@@ -16,6 +16,7 @@ import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFile
 
 import iconv = require('iconv-lite');
 import { LogFileWatcher } from './node_utility/LogFileWatcher';
+// import { error } from 'console';
 
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -518,6 +519,7 @@ abstract class Target implements IView {
         dark: 'Class_16x'
     };
 
+
     //-------------
 
     readonly targetName: string;
@@ -593,8 +595,8 @@ abstract class Target implements IView {
     }
 
     updateLogOutput(text: Buffer) {
-        // console.log(iconv.decode(text, 'cp936'));
-        channel.append(`${iconv.decode(text, 'cp936')}`);
+        console.log(iconv.decode(text, 'cp936'));
+        // channel.appendLine(`${iconv.decode(text, 'cp936')}`);
     }
 
     private getDefCppProperties(): any {
@@ -771,7 +773,7 @@ abstract class Target implements IView {
             return;
         }
         this.isTaskRunning = true;
-        this.uv4LogFileWatcher.watch();
+        // this.uv4LogFileWatcher.watch();
 
         writeFileSync(this.uv4LogFile.path, '');
         channel.clear();
@@ -796,13 +798,65 @@ abstract class Target implements IView {
             execCommand.on('close', (code) => {
                 this.isTaskRunning = false;
                 // console.log(`on close code:${code}`);
-                // const logst = readFileSync(this.uv4LogFile.path);
-                channel.appendLine(`Build Finished!`);
-                // channel.appendLine(`${iconv.decode(logst, 'cp936')}`);
+                const logst = readFileSync(this.uv4LogFile.path);
+                const dealedLog = this.dealBuildLog(`${iconv.decode(logst, 'cp936')}`);
+                channel.appendLine(dealedLog);
+                // channel.appendLine(`Build Finished!`);
                 this.uv4LogFileWatcher.close();
             });
 
         });
+    }
+
+    dealBuildLog(buildLog: string): string {
+
+        let buildLogStr = buildLog;
+        let warningEnd = 0;
+        while (true) {
+            warningEnd = buildLogStr.indexOf("warning:", warningEnd)
+            if (warningEnd > 0) {
+                const warningStart = buildLogStr.lastIndexOf("\n", warningEnd);
+                const fileMsg = buildLogStr.substring(warningStart + 1, warningEnd - 1);
+                const fileName = fileMsg.substring(0, fileMsg.indexOf("("));
+                const fileFullName = this.project.toAbsolutePath(fileName);
+                const fileLine = fileMsg.substring(fileMsg.lastIndexOf("(") + 1, fileMsg.indexOf(")"));
+
+                if (fileFullName) {
+                    let replaceMsg = fileFullName + ":" + fileLine + " -> ";
+                    buildLogStr = buildLogStr.replace(fileMsg, replaceMsg);
+                    warningEnd += replaceMsg.length;
+                }
+                else {
+                    warningEnd += fileName.length;
+                }
+            } else {
+                break;
+            }
+        }
+        let errorEnd = 0;
+        while (true) {
+            errorEnd = buildLogStr.indexOf("error:", errorEnd)
+            if (errorEnd > 0) {
+                const errorStart = buildLogStr.lastIndexOf("\n", errorEnd);
+                const fileMsg = buildLogStr.substring(errorStart + 1, errorEnd - 1);
+
+                const fileName = fileMsg.substring(0, fileMsg.indexOf("("));
+                const fileFullName = this.project.toAbsolutePath(fileName);
+                const fileLine = fileMsg.substring(fileMsg.lastIndexOf("(") + 1, fileMsg.indexOf(")"));
+
+                if (fileFullName) {
+                    let replaceMsg = fileFullName + ":" + fileLine + " -> ";
+                    buildLogStr = buildLogStr.replace(fileMsg, replaceMsg);
+                    errorEnd += replaceMsg.length;
+                }
+                else {
+                    errorEnd += fileName.length;
+                }
+            } else {
+                break;
+            }
+        }
+        return buildLogStr;
     }
 
     build() {
@@ -1547,7 +1601,7 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
                 }
 
 
-                // uvList.concat() //本地文件列表
+                // uvList.concat() //�?地文件列�?
                 ResourceManager.getInstance().getProjectFileLocationList().forEach(
                     str => {
                         // uvList = uvList.concat(workspace.path2File(str, [/\.uvproj[x]?$/i], File.emptyFilter));
