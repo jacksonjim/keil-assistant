@@ -804,6 +804,7 @@ abstract class Target implements IView {
             execCommand.on('close', (code) => {
                 this.isTaskRunning = false;
                 clearInterval(interval);
+                vscode.commands.executeCommand('workbench.action.focusActiveEditorGroup');
                 // console.log(`on close code:${code}`);
                 // const logst = readFileSync(this.uv4LogFile.path);
                 // const dealedLog = this.dealBuildLog(`${iconv.decode(logst, 'cp936')}`);
