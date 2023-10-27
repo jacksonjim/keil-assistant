@@ -798,7 +798,7 @@ abstract class Target implements IView {
             let readData = this.tail_f(this.uv4LogFile.path);
             const dealedLog = this.dealBuildLog(readData);
             channel.append(dealedLog);
-        }, 1);
+        }, 100);
 
         return new Promise<void>(_res => {
             execCommand.on('close', (code) => {
