@@ -804,7 +804,7 @@ abstract class Target implements IView {
             execCommand.on('close', (code) => {
                 this.isTaskRunning = false;
                 clearInterval(interval);
-                console.log(`on close code:${code}`);
+                // console.log(`on close code:${code}`);
                 // const logst = readFileSync(this.uv4LogFile.path);
                 // const dealedLog = this.dealBuildLog(`${iconv.decode(logst, 'cp936')}`);
                 // channel.appendLine(dealedLog);
@@ -814,8 +814,8 @@ abstract class Target implements IView {
             });
         });
     }
-    private FILE_LINE_LEN = 10 * 1024;
 
+    private FILE_LINE_LEN = 10 * 1024;
     private lastBytesRead = 0;
 
     private tail_f(file: string): string {
