@@ -14,9 +14,10 @@ import { XMLParser } from 'fast-xml-parser';
 import { decode } from 'he';
 import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync } from 'fs';
 
+import * as fs from 'fs';
+
 import iconv = require('iconv-lite');
 import { LogFileWatcher } from './node_utility/LogFileWatcher';
-// import { error } from 'console';
 
 
 let myStatusBarItem: vscode.StatusBarItem;
@@ -793,19 +794,50 @@ abstract class Target implements IView {
             }
         );
 
-        return new Promise<void>(_res => {
+        const interval = setInterval(() => {
+            let readData = this.tail_f(this.uv4LogFile.path);
+            const dealedLog = this.dealBuildLog(readData);
+            channel.append(dealedLog);
+        }, 1);
 
+        return new Promise<void>(_res => {
             execCommand.on('close', (code) => {
                 this.isTaskRunning = false;
-                // console.log(`on close code:${code}`);
-                const logst = readFileSync(this.uv4LogFile.path);
-                const dealedLog = this.dealBuildLog(`${iconv.decode(logst, 'cp936')}`);
-                channel.appendLine(dealedLog);
-                // channel.appendLine(`Build Finished!`);
-                this.uv4LogFileWatcher.close();
-            });
+                clearInterval(interval);
+                console.log(`on close code:${code}`);
+                // const logst = readFileSync(this.uv4LogFile.path);
+                // const dealedLog = this.dealBuildLog(`${iconv.decode(logst, 'cp936')}`);
+                // channel.appendLine(dealedLog);
 
+                // channel.appendLine(`Build Finished!`);
+                // this.uv4LogFileWatcher.close();
+            });
         });
+    }
+    private FILE_LINE_LEN = 10 * 1024;
+
+    private lastBytesRead = 0;
+
+    private tail_f(file: string): string {
+
+        if (!file) return "";
+        const fd = fs.openSync(file, "r");
+
+        if (!fd) {
+            console.log(`cant open file, file: ${file}`);
+            return "";
+        }
+
+        const buffer = Buffer.alloc(this.FILE_LINE_LEN);
+        let bytesRead = fs.readSync(fd, buffer, 0, this.FILE_LINE_LEN, 0);
+
+        let logString = buffer.toString("utf-8", 0, bytesRead);
+        logString = logString.substring(this.lastBytesRead, bytesRead);
+        this.lastBytesRead = bytesRead;
+
+        fs.closeSync(fd);
+
+        return logString;
     }
 
     dealBuildLog(buildLog: string): string {
@@ -818,6 +850,7 @@ abstract class Target implements IView {
                 const warningStart = buildLogStr.lastIndexOf("\n", warningEnd);
                 const fileMsg = buildLogStr.substring(warningStart + 1, warningEnd - 1);
                 const fileName = fileMsg.substring(0, fileMsg.indexOf("("));
+
                 const fileFullName = this.project.toAbsolutePath(fileName);
                 const fileLine = fileMsg.substring(fileMsg.lastIndexOf("(") + 1, fileMsg.indexOf(")"));
 
@@ -1601,7 +1634,7 @@ class ProjectExplorer implements vscode.TreeDataProvider<IView> {
                 }
 
 
-                // uvList.concat() //�?地文件列�?
+                // uvList.concat() 
                 ResourceManager.getInstance().getProjectFileLocationList().forEach(
                     str => {
                         // uvList = uvList.concat(workspace.path2File(str, [/\.uvproj[x]?$/i], File.emptyFilter));
