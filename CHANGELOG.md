@@ -2,9 +2,14 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.5]
+- Feature:
+- #12 Added error highlighting and automatic redirection
+***
+
 ## [v1.8.4]
 - Fixed:
-- #12 optimize Kei log out show
+- #12 optimize Keil log out show
 ***
 
 ## [v1.8.3]

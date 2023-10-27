@@ -57,7 +57,7 @@
     "compile-dev": "webpack --mode development",
     "compile-watch": "webpack --mode production --watch --progress",
     "compile-dev-watch": "webpack --mode development --watch --progress",
-    "compile-unit-test": "tsc --build test.tsconfig.json", 
+    "compile-unit-test": "tsc --build test.tsconfig.json",
     "compile-watch-unit-test": "tsc --build test.tsconfig.json --watch",
     "watch": "tsc --build tsconfig.json --watch",
     "compile-tests": "tsc -p test.tsconfig.json --outDir out",
@@ -272,6 +272,12 @@
           "**/*.A251"
         ],
         "configuration": "./syntaxes/a251.language-configuration.json"
+      },
+      {
+        "id": "Log",
+        "mimetypes": [
+          "text/x-code-output"
+        ]
       }
     ],
     "grammars": [
@@ -284,6 +290,11 @@
         "language": "a251",
         "scopeName": "source.asm.a251",
         "path": "./syntaxes/a251.tmLanguage.json"
+      },
+      {
+        "language": "Log",
+        "scopeName": "build-log",
+        "path": "./syntaxes/build-log.tmLanguage"
       }
     ],
     "views": {
@@ -358,7 +369,6 @@
       }
     ]
   },
-  
   "devDependencies": {
     "@types/glob": "^8.1.0",
     "@types/he": "^1.2.1",
