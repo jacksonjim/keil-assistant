@@ -1,6 +1,10 @@
 # Change Log
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
+## [v1.8.6]
+- Fixed:
+- #12 Fixed Keil log out show
+***
 
 ## [v1.8.5]
 - Feature:
