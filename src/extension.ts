@@ -16,7 +16,7 @@ import { Time } from './node_utility/Time';
 import { CmdLineHandler } from './CmdLineHandler';
 
 import { XMLParser } from 'fast-xml-parser';
-import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync, openSync, readSync } from 'fs';
+import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync, openSync, readSync, closeSync } from 'fs';
 import { decode as heDecode } from 'he';
 import { decode } from 'iconv-lite';
 
@@ -766,7 +766,6 @@ abstract class Target implements IView {
             return;
         }
         this.isTaskRunning = true;
-        // this.uv4LogFileWatcher.watch();
 
         writeFileSync(this.uv4LogFile.path, '');
         if (this.taskChannel !== undefined) {
@@ -801,9 +800,10 @@ abstract class Target implements IView {
             }
         );
 
-        execCommand.on('close', (code) => {
+        execCommand.on('close', (_code) => {
             this.isTaskRunning = false;
             this.taskChannel?.appendLine(`Build Finished!`);
+            closeSync(fd);
             watcher.dispose();
         });
 
