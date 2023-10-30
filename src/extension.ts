@@ -819,6 +819,7 @@ abstract class Target implements IView {
                 const warningStart = buildLogStr.lastIndexOf("\n", warningEnd);
                 const fileMsg = buildLogStr.substring(warningStart + 1, warningEnd - 1);
                 const fileName = fileMsg.substring(0, fileMsg.indexOf("("));
+
                 const fileFullName = this.project.toAbsolutePath(fileName);
                 const fileLine = fileMsg.substring(fileMsg.lastIndexOf("(") + 1, fileMsg.indexOf(")"));
 
