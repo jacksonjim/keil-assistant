@@ -1,15 +1,16 @@
 # Change Log
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
+
 ## [v1.8.6]
 - Fixed:
-- #12 Fixed Keil log out show
+- Keil log out show
 ***
 
 ## [v1.8.5]
 - Feature:
-- #12 Added error highlighting and automatic redirection
 - #13 Arm Clang V6 Newer Versions Get the correct parameters for the built-in macros
+- Added error highlighting and automatic redirection
 ***
 
 ## [v1.8.4]
