@@ -5,6 +5,7 @@ All notable changes to the "keil-assistant" extension will be documented in this
 ## [v1.8.5]
 - Feature:
 - #12 Added error highlighting and automatic redirection
+- #13 Arm Clang V6 Newer Versions Get the correct parameters for the built-in macros
 ***
 
 ## [v1.8.4]

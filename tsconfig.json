@@ -10,7 +10,7 @@
     "inlineSourceMap": true,
     "rootDir": ".",
     "removeComments": true,
-    "noUnusedLocals": true,
+    "noUnusedLocals": false,
     "strictNullChecks": true,
     "strict": true, /* enable all strict type-checking options */
     "forceConsistentCasingInFileNames": true

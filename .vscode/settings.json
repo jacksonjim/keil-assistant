@@ -10,5 +10,6 @@
     },
     // Turn off tsc task auto detection since we have the necessary tasks as npm scripts
     "typescript.tsc.autoDetect": "off",
-    "java.dependency.syncWithFolderExplorer": false
+    "java.dependency.syncWithFolderExplorer": false,
+    "C_Cpp.clang_format_path": "D:\\ProgramData\\.vscode\\extensions\\ms-vscode.cpptools-1.17.5-win32-x64\\LLVM\\bin\\clang-format.exe"
 }
