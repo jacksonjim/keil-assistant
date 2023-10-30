@@ -805,6 +805,7 @@ abstract class Target implements IView {
             this.taskChannel?.appendLine(`Build Finished!`);
             closeSync(fd);
             watcher.dispose();
+            commands.executeCommand('workbench.action.focusActiveEditorGroup');
         });
 
     }
