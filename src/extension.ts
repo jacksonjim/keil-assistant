@@ -778,12 +778,16 @@ abstract class Target implements IView {
         const fd = openSync(this.uv4LogFile.path, 'r');
         const watcher = workspace.createFileSystemWatcher(this.uv4LogFile.path, false, false, false);
         let curPos = 0;
+        const buf = Buffer.alloc(1024);
         watcher.onDidChange(() => {
             const stats = statSync(this.uv4LogFile.path);
             if (stats && stats.size > 0) {
-                const buf = Buffer.alloc(1024);
-                curPos += readSync(fd, buf, 0, 1024, curPos);
-                this.taskChannel?.appendLine(this.dealBuildLog(buf));
+                const numRead = readSync(fd, buf, 0, 1024, curPos);
+                if (numRead > 0) {
+                    curPos += numRead;
+                    const txt = this.dealBuildLog(buf.slice(0, numRead));
+                    this.taskChannel?.append(txt);
+                }
             }
         });
 
@@ -1842,7 +1846,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
                 for (const uvPath of uvList) {
                     try {
                         // console.log('prj uvFile start', uvPath);
-                        channel.appendLine(uvPath);
+                        // channel.appendLine(uvPath);
                         await this.openProject(uvPath);
                     } catch (error) {
                         channel.appendLine(`Error: open project ${error}`);
