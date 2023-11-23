@@ -682,6 +682,11 @@ abstract class Target implements IView {
             }
         });
 
+        // RTE macros
+        this.getRteDefines(this.rteDom).forEach((define) => {
+            this.defines.add(define);
+        });
+
         // add system macros
         this.getSysDefines(this.targetDOM).forEach((define) => {
             this.defines.add(define);
@@ -912,6 +917,7 @@ abstract class Target implements IView {
     protected abstract getIncString(target: any): string;
     protected abstract getDefineString(target: any): string;
     protected abstract getSysDefines(target: any): string[];
+    protected abstract getRteDefines(target: any): string[];
     protected abstract getGroups(target: any): any[];
     protected abstract getSystemIncludes(target: any): string[] | undefined;
     protected abstract getRTEIncludes(target: any, rteDom: any): string[] | undefined;
@@ -973,6 +979,11 @@ class C51Target extends Target {
             '_priority_=',
             '_task_='
         ];
+    }
+
+    protected getRteDefines(target: any): string[] {
+        if (!target) { return []; }
+        return ["_RTE_"];
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
@@ -1064,6 +1075,11 @@ class C251Target extends Target {
             '_priority_=',
             '_task_='
         ];
+    }
+
+    protected getRteDefines(target: any): string[] {
+        if (!target) { return []; }
+        return ["_RTE_"];
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
@@ -1351,6 +1367,11 @@ class ArmTarget extends Target {
         } else { // ARMCC
             return ArmTarget.armccMacros;
         }
+    }
+
+    protected getRteDefines(target: any): string[] {
+        if (!target) { return []; }
+        return ["_RTE_"];
     }
 
     private getArmClangMacroList(armClangPath: string, armClangCpu?: string): string[] {

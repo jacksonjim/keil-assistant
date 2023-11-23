@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.8]
+- Fixed:
+- RTE macros
+***
+
 ## [v1.8.7]
 - Fixed:
 - Build log are garbled
