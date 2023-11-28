@@ -3,9 +3,9 @@
 
 ![LOGO](res/icons/icon.png)
  
-[![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/jacksonjim.keil-vscode-assistant?logo=visualstudiocode)](https://github.com/jacksonjim/keil-assistant)
-[![GitHub release (with filter)](https://img.shields.io/github/v/release/jacksonjim/keil-assistant?display_name=release&logo=github)](https://github.com/jacksonjim/keil-assistant)
-[![Build Linux & Windows](https://github.com/jacksonjim/keil-assistant/workflows/Build%20vsce%20package/badge.svg)](https://github.com/jacksonjim/keil-assistant)
+[![Visual Studio Marketplace Version (including pre-releases)](https://img.shields.io/visual-studio-marketplace/v/jacksonjim.keil-vscode-assistant?logo=visualstudiocode)](https://githubfast.com/jacksonjim/keil-assistant)
+[![GitHub release (with filter)](https://img.shields.io/github/v/release/jacksonjim/keil-assistant?display_name=release&logo=github)](https://githubfast.com/jacksonjim/keil-assistant)
+[![Build Linux & Windows](https://githubfast.com/jacksonjim/keil-assistant/workflows/Build%20vsce%20package/badge.svg)](https://githubfast.com/jacksonjim/keil-assistant)
 
 </div>
 
@@ -18,6 +18,8 @@
 vscode 上的 Keil 辅助工具，与 c/c++ 插件配合使用.
 
 能够为 Keil 项目提供 语法高亮、代码片段 的功能，并支持对 keil 项目进行 编译、下载。
+
+**[关于Keil助手插件的下载的默认快捷键是否需要调整为F8键来做个调查](https://githubfast.com/jacksonjim/keil-assistant/discussions/20)**
 
 **仅支持 Keil uVison 5 及以上版本**
 
@@ -162,6 +164,6 @@ void UART1_int(void) INTERRUPT(UART1_VECTOR)
 
 - [论坛: https://discuss.em-ide.com/t/keil-assistant](https://discuss.em-ide.com/t/keil-assistant)
 
-- [Github Issue: https://github.com/jacksonjim/keil-assistant/issues](https://github.com/jacksonjim/keil-assistant/issues)
+- [Github Issue: https://githubfast.com/jacksonjim/keil-assistant/issues](https://githubfast.com/jacksonjim/keil-assistant/issues)
 
 <a href='https://gitclone.com'><img src='https://gitclone.com/img/title.ico' style='width:300px;'/></a>
