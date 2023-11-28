@@ -2,6 +2,12 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.8.9]
+- Fixed:
+- #19 RTE macros import not form Non RTE project
+- #17 Uv4 log out put show
+***
+
 ## [v1.8.8]
 - Fixed:
 - RTE macros

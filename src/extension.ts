@@ -16,9 +16,10 @@ import { Time } from './node_utility/Time';
 import { CmdLineHandler } from './CmdLineHandler';
 
 import { XMLParser } from 'fast-xml-parser';
-import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync, openSync, readSync, closeSync } from 'fs';
+import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync, openSync, readSync, closeSync, watchFile } from 'fs';
 import { decode as heDecode } from 'he';
 import { decode } from 'iconv-lite';
+import { watch } from 'fs/promises';
 
 let myStatusBarItem: StatusBarItem;
 let channel: OutputChannel;
@@ -765,6 +766,10 @@ abstract class Target implements IView {
         this.updateSourceRefs();
     }
 
+    private sleep(ms: number): Promise<void> {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
     private runAsyncTask(name: string, type: 'b' | 'r' | 'f' = 'b') {
         if (this.isTaskRunning) {
             window.showWarningMessage(`Task isRuning Please wait it finished try !`);
@@ -780,14 +785,17 @@ abstract class Target implements IView {
         this.taskChannel.appendLine(`Start to ${name} target ${this.label}`);
         this.taskChannel.show();
 
-        const fd = openSync(this.uv4LogFile.path, 'r');
-        const watcher = workspace.createFileSystemWatcher(this.uv4LogFile.path, false, false, false);
+        const fd = openSync(this.uv4LogFile.path, 'a+');
+        // const watcher = workspace.createFileSystemWatcher(this.uv4LogFile.path, false, false, false);
         let curPos = 0;
-        const buf = Buffer.alloc(1024);
-        watcher.onDidChange(() => {
-            const stats = statSync(this.uv4LogFile.path);
-            if (stats && stats.size > 0) {
-                const numRead = readSync(fd, buf, 0, 1024, curPos);
+        const buf = Buffer.alloc(4096);
+
+        const logWatcher = watchFile(this.uv4LogFile.path, { persistent: true, interval: 1000 }, (curr, prev) => {
+            // console.log("curr:", curr.size, "prev", prev.size);
+            if (curr.mtime > prev.mtime) {
+                // let buffer = new Buffer(curr.size - prev.size);
+                // console.log("size",(curr.size - prev.size));
+                const numRead = readSync(fd, buf, 0, 4096, prev.size);
                 if (numRead > 0) {
                     curPos += numRead;
                     const txt = this.dealBuildLog(buf.slice(0, numRead));
@@ -795,6 +803,28 @@ abstract class Target implements IView {
                 }
             }
         });
+        // watcher.onDidChange(() => {
+        //     const stats = statSync(this.uv4LogFile.path);
+        //     if (stats && stats.size > 0) {
+        //         /*const numRead = readSync(fd, buf, 0, 1024, curPos);
+        //         if (numRead > 0) {
+        //             curPos += numRead;
+        //             const txt = this.dealBuildLog(buf.slice(0, numRead));
+        //             this.taskChannel?.append(txt);
+        //         }*/
+        //         curPos = 0;
+        //         this.taskChannel?.clear();
+        //         console.log("stats:", stats);
+        //         while (curPos < stats.size) {
+        //             const numRead = readSync(fd, buf, 0, 1024, curPos);
+        //             if (numRead > 0) {
+        //                 curPos += numRead;
+        //                 const txt = this.dealBuildLog(buf.slice(0, numRead));
+        //                 this.taskChannel?.append(txt);
+        //             }
+        //         }
+        //     }
+        // });
 
         const execCommand = spawn(`${ResourceManager.getInstance().getKeilUV4Path(this.getKeilPlatform())}`,
             [
@@ -809,13 +839,28 @@ abstract class Target implements IView {
             }
         );
 
-        execCommand.on('close', (_code) => {
+        execCommand.on('close', async (_code) => {
             this.isTaskRunning = false;
+            // let execSync = require('child_process').execSync;
+            // execSync('sleep ' + 5);
+            // await this.sleep(20);
+            const stats = statSync(this.uv4LogFile.path);
+            while (curPos < stats.size) {
+                const numRead = readSync(fd, buf, 0, 4096, curPos);
+                if (numRead > 0) {
+                    curPos += numRead;
+                    const txt = this.dealBuildLog(buf.slice(0, numRead));
+                    this.taskChannel?.append(txt);
+                }
+            }
             this.taskChannel?.appendLine(`Build Finished!`);
             closeSync(fd);
-            watcher.dispose();
+            logWatcher.removeAllListeners();
+            // watcher.dispose();
             commands.executeCommand('workbench.action.focusActiveEditorGroup');
         });
+
+
 
     }
 
@@ -982,8 +1027,14 @@ class C51Target extends Target {
     }
 
     protected getRteDefines(target: any): string[] {
-        if (!target) { return []; }
-        return ["_RTE_"];
+        if (target) {
+            const components = target['components']['component'];
+            const apis = target['apis']['api'];
+            if (Array.isArray(components) || Array.isArray(apis)) {
+                return ["_RTE_"];
+            }
+        }
+        return [];
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
@@ -1078,8 +1129,14 @@ class C251Target extends Target {
     }
 
     protected getRteDefines(target: any): string[] {
-        if (!target) { return []; }
-        return ["_RTE_"];
+        if (target) {
+            const components = target['components']['component'];
+            const apis = target['apis']['api'];
+            if (Array.isArray(components) || Array.isArray(apis)) {
+                return ["_RTE_"];
+            }
+        }
+        return [];
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
@@ -1370,8 +1427,14 @@ class ArmTarget extends Target {
     }
 
     protected getRteDefines(target: any): string[] {
-        if (!target) { return []; }
-        return ["_RTE_"];
+        if (target) {
+            const components = target['components']['component'];
+            const apis = target['apis']['api'];
+            if (Array.isArray(components) || Array.isArray(apis)) {
+                return ["_RTE_"];
+            }
+        }
+        return [];
     }
 
     private getArmClangMacroList(armClangPath: string, armClangCpu?: string): string[] {
