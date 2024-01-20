@@ -535,7 +535,7 @@ abstract class Target implements IView {
     protected defines: Set<string>;
 
     private uv4LogFile: File;
-    private uv4LogLockFileWatcher: FileWatcher;
+    // private uv4LogLockFileWatcher: FileWatcher;
     private isTaskRunning: boolean = false;
     private taskChannel: OutputChannel | undefined;
 
@@ -554,7 +554,7 @@ abstract class Target implements IView {
         this.defines = new Set();
         this.fGroups = [];
         this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + this.targetName + '_uv4.log');
-        this.uv4LogLockFileWatcher = new FileWatcher(new File(this.uv4LogFile.path + '.lock'));
+        /*this.uv4LogLockFileWatcher = new FileWatcher(new File(this.uv4LogFile.path + '.lock'));
 
         if (!this.uv4LogLockFileWatcher.file.isFile()) { // create file if not existed
             this.uv4LogLockFileWatcher.file.write('');
@@ -571,7 +571,7 @@ abstract class Target implements IView {
             }
 
             this.uv4LogLockFileWatcher.watch();
-        });
+        });*/
 
     }
 
@@ -876,7 +876,7 @@ abstract class Target implements IView {
         return logStr;
 
     }
-    
+
     build() {
         this.runAsyncTask('Build', 'b');
     }
@@ -912,7 +912,7 @@ abstract class Target implements IView {
     }
 
     close() {
-        this.uv4LogLockFileWatcher.close();
+        // this.uv4LogLockFileWatcher.close();
     }
 
     getChildViews(): IView[] | undefined {
@@ -1689,7 +1689,9 @@ class ArmTarget extends Target {
         if (Array.isArray(componentList)) {
             components = components.concat(componentList);
         } else {
-            components.push(componentList);
+            if (componentList !== undefined) {
+                components.push(componentList);
+            }
         }
         for (const component of components) {
             const cClass = component['@_Cclass'];
