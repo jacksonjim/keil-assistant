@@ -876,7 +876,7 @@ abstract class Target implements IView {
         return logStr;
 
     }
-    
+
     build() {
         this.runAsyncTask('Build', 'b');
     }
@@ -1689,7 +1689,9 @@ class ArmTarget extends Target {
         if (Array.isArray(componentList)) {
             components = components.concat(componentList);
         } else {
-            components.push(componentList);
+            if (componentList !== undefined) {
+                components.push(componentList);
+            }
         }
         for (const component of components) {
             const cClass = component['@_Cclass'];
