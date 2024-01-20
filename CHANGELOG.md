@@ -2,6 +2,12 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.0]
+- Fixed:
+- #25 #27 Build Error or Warning log cannot goto error file line number
+- #26 keil projectx file in subdirectory will show include error and update includePath message.
+***
+
 ## [v1.8.9]
 - Fixed:
 - #19 RTE macros import not form Non RTE project

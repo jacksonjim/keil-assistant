@@ -19,7 +19,6 @@ import { XMLParser } from 'fast-xml-parser';
 import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync, openSync, readSync, closeSync, watchFile } from 'fs';
 import { decode as heDecode } from 'he';
 import { decode } from 'iconv-lite';
-import { watch } from 'fs/promises';
 
 let myStatusBarItem: StatusBarItem;
 let channel: OutputChannel;
@@ -289,11 +288,11 @@ class KeilProject implements IView, KeilProjectInfo {
         project: undefined,
     };
 
-    constructor(_uvprjFile: File) {
+    constructor(_uvprjFile: File, workspace: string | undefined) {
         this._event = new EventsEmitter();
         this.uVsionFileInfo = <UVisonInfo>{};
         this.targetList = [];
-        this.vscodeDir = new File(_uvprjFile.dir + File.sep + '.vscode');
+        this.vscodeDir = new File(workspace + File.sep + '.vscode');
         this.vscodeDir.createDir();
         const logPath = this.vscodeDir.path + File.sep + 'keil-assistant.log';
         this.logger = new console.Console(createWriteStream(logPath, { flags: 'a+' }));
@@ -554,7 +553,7 @@ abstract class Target implements IView {
         this.includes = new Set();
         this.defines = new Set();
         this.fGroups = [];
-        this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + 'uv4.log');
+        this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + this.targetName + '_uv4.log');
         this.uv4LogLockFileWatcher = new FileWatcher(new File(this.uv4LogFile.path + '.lock'));
 
         if (!this.uv4LogLockFileWatcher.file.isFile()) { // create file if not existed
@@ -704,7 +703,6 @@ abstract class Target implements IView {
         }
 
         for (const group of groups) {
-
             if (group['Files'] !== undefined) {
 
                 let isGroupExcluded = false;
@@ -798,7 +796,7 @@ abstract class Target implements IView {
                 const numRead = readSync(fd, buf, 0, 4096, prev.size);
                 if (numRead > 0) {
                     curPos += numRead;
-                    const txt = this.dealBuildLog(buf.slice(0, numRead));
+                    const txt = this.dealLog(buf.slice(0, numRead));
                     this.taskChannel?.append(txt);
                 }
             }
@@ -849,7 +847,7 @@ abstract class Target implements IView {
                 const numRead = readSync(fd, buf, 0, 4096, curPos);
                 if (numRead > 0) {
                     curPos += numRead;
-                    const txt = this.dealBuildLog(buf.slice(0, numRead));
+                    const txt = this.dealLog(buf.slice(0, numRead));
                     this.taskChannel?.append(txt);
                 }
             }
@@ -864,57 +862,21 @@ abstract class Target implements IView {
 
     }
 
-    dealBuildLog(buildLog: Buffer): string {
-        let buildLogStr = decode(buildLog, 'cp936');
-        let warningEnd = 0;
-        while (true) {
-            warningEnd = buildLogStr.indexOf("warning:", warningEnd);
-            if (warningEnd > 0) {
-                const warningStart = buildLogStr.lastIndexOf("\n", warningEnd);
-                const fileMsg = buildLogStr.substring(warningStart + 1, warningEnd - 1);
-                const fileName = fileMsg.substring(0, fileMsg.indexOf("("));
+    dealLog(logTxt: Buffer): string {
+        let logStr = decode(logTxt, 'cp936');
+        const srcFileExp: RegExp = /((\.\.\/)?.*\..\(\d+\)):/g;
 
-                const fileFullName = this.project.toAbsolutePath(fileName);
-                const fileLine = fileMsg.substring(fileMsg.lastIndexOf("(") + 1, fileMsg.indexOf(")"));
-
-                if (fileFullName) {
-                    let replaceMsg = fileFullName + ":" + fileLine + " -> ";
-                    buildLogStr = buildLogStr.replace(fileMsg, replaceMsg);
-                    warningEnd += replaceMsg.length;
-                }
-                else {
-                    warningEnd += fileName.length;
-                }
-            } else {
-                break;
-            }
+        if (srcFileExp.test(logStr)) {
+            const prjRoot = this.project.uvprjFile.dir;
+            logStr = logStr.replace(srcFileExp, function (_match, str) {
+                return normalize(prjRoot + File.sep + str);
+            });
         }
-        let errorEnd = 0;
-        while (true) {
-            errorEnd = buildLogStr.indexOf("error:", errorEnd);
-            if (errorEnd > 0) {
-                const errorStart = buildLogStr.lastIndexOf("\n", errorEnd);
-                const fileMsg = buildLogStr.substring(errorStart + 1, errorEnd - 1);
 
-                const fileName = fileMsg.substring(0, fileMsg.indexOf("("));
-                const fileFullName = this.project.toAbsolutePath(fileName);
-                const fileLine = fileMsg.substring(fileMsg.lastIndexOf("(") + 1, fileMsg.indexOf(")"));
+        return logStr;
 
-                if (fileFullName) {
-                    let replaceMsg = fileFullName + ":" + fileLine + " -> ";
-                    buildLogStr = buildLogStr.replace(fileMsg, replaceMsg);
-                    errorEnd += replaceMsg.length;
-                }
-                else {
-                    errorEnd += fileName.length;
-                }
-            } else {
-                break;
-            }
-        }
-        return buildLogStr;
     }
-
+    
     build() {
         this.runAsyncTask('Build', 'b');
     }
@@ -1054,7 +1016,7 @@ class C51Target extends Target {
         return undefined;
     }
 
-    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
+    protected getRTEIncludes(_target: any, _rteDom: any): string[] | undefined {
         return undefined;
     }
 
@@ -1156,7 +1118,7 @@ class C251Target extends Target {
         return undefined;
     }
 
-    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
+    protected getRTEIncludes(_target: any, _rteDom: any): string[] | undefined {
         return undefined;
     }
 
@@ -1692,10 +1654,11 @@ class ArmTarget extends Target {
         return undefined;
     }
 
-    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
+    protected getRTEIncludes(_target: any, rteDom: any): string[] | undefined {
         if (!rteDom) { return undefined; }
         //
-        const components = rteDom['components']['component'];
+        const componentList = rteDom['components']['component'];
+        let components: Array<any> = [];
         let incList: string[] = [];
         const incMap: Map<string, string> = new Map();
         const keilRootDir = ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform());
@@ -1716,93 +1679,98 @@ class ArmTarget extends Target {
             cdataPositionChar: "\\c",
             parseTrueNumberOnly: false,
             arrayMode: false, //"strict"
-            attrValueProcessor: (val: any, attrName: any) => heDecode(val, { isAttributeValue: true }),//default is a=>a
-            tagValueProcessor: (val: any, tagName: any) => heDecode(val), //default is a=>a
+            attrValueProcessor: (val: any, _attrName: any) => heDecode(val, { isAttributeValue: true }),//default is a=>a
+            tagValueProcessor: (val: any, _tagName: any) => heDecode(val), //default is a=>a
             stopNodes: ["parse-me-as-string"]
         };
         const parser = new XMLParser(options);
         const cache = new Map<string, any>();
         let pdscDom: any | undefined;
-        if (Array.isArray(components)) {
-            for (const component of components) {
-                const cClass = component['@_Cclass'];
-                const cGroup = component['@_Cgroup'];
-                const cSub = component['@_Csub'];
-                const cVendor = component['@_Cvendor'];
-                const cVersion = component['@_Cversion'];
-                const cCondition = component['@_condition'];
-                const cPackage = component['package'];
-                const pkgName = cPackage['@_name'];
-                const pkgVendor = cPackage['@_vendor'];
-                const pkgVersion = cPackage['@_version'];
-                const cRootDir = `${packsDir}${File.sep}${pkgVendor}${File.sep}${pkgName}${File.sep}${pkgVersion}`;
-                const pdscPath = `${cRootDir}${File.sep}${cVendor}.${pkgName}.pdsc`;
-                if (cache.has(pdscPath)) {
-                    pdscDom = cache.get(pdscPath);
+        if (Array.isArray(componentList)) {
+            components = components.concat(componentList);
+        } else {
+            components.push(componentList);
+        }
+        for (const component of components) {
+            const cClass = component['@_Cclass'];
+            const cGroup = component['@_Cgroup'];
+            const cSub = component['@_Csub'];
+            const cVendor = component['@_Cvendor'];
+            const cVersion = component['@_Cversion'];
+            const cCondition = component['@_condition'];
+            const cPackage = component['package'];
+            const pkgName = cPackage['@_name'];
+            const pkgVendor = cPackage['@_vendor'];
+            const pkgVersion = cPackage['@_version'];
+            const cRootDir = `${packsDir}${File.sep}${pkgVendor}${File.sep}${pkgName}${File.sep}${pkgVersion}`;
+            const pdscPath = `${cRootDir}${File.sep}${cVendor}.${pkgName}.pdsc`;
+
+            if (cache.has(pdscPath)) {
+                pdscDom = cache.get(pdscPath);
+            } else {
+                const pdsc = new File(pdscPath);
+                if (pdsc.isExist() && pdsc.isFile()) {
+                    const pdscdoc = pdsc.read();
+                    pdscDom = parser.parse(pdscdoc);
+                    cache.set(pdscPath, pdscDom);
                 } else {
-                    const pdsc = new File(pdscPath);
-                    if (pdsc.isExist() && pdsc.isFile()) {
-                        const pdscdoc = pdsc.read();
-                        pdscDom = parser.parse(pdscdoc);
-                        cache.set(pdscPath, pdscDom);
-                    } else {
-                        continue;
-                    }
+                    continue;
                 }
-                if (pdscDom) {
-                    const pdscComponents = pdscDom['package']['components']['component'];
-                    if (Array.isArray(pdscComponents)) {
-                        let hasInc = false;
-                        for (const pdscComponent of pdscComponents) {
-                            const pdscClass = pdscComponent['@_Cclass'];
-                            const pdscGroup = pdscComponent['@_Cgroup'];
-                            const pdscCondition = pdscComponent['@_condition'];
-                            const pdscVersion = pdscComponent['@_Cversion'];
-                            const pdscSub = pdscComponent['@_Csub'];
-                            const pdscfileList = pdscComponent['files']['file'];
-                            let subEq = true;
-                            if (pdscSub !== undefined && cSub !== undefined) {
-                                subEq = pdscSub === cSub;
-                            } else {
-                                subEq = true;
-                            }
+            }
+            if (pdscDom) {
+                const pdscComponents = pdscDom['package']['components']['component'];
+                if (Array.isArray(pdscComponents)) {
+                    let hasInc = false;
+                    for (const pdscComponent of pdscComponents) {
+                        const pdscClass = pdscComponent['@_Cclass'];
+                        const pdscGroup = pdscComponent['@_Cgroup'];
+                        const pdscCondition = pdscComponent['@_condition'];
+                        const pdscVersion = pdscComponent['@_Cversion'];
+                        const pdscSub = pdscComponent['@_Csub'];
+                        const pdscfileList = pdscComponent['files']['file'];
+                        let subEq = true;
+                        if (pdscSub !== undefined && cSub !== undefined) {
+                            subEq = pdscSub === cSub;
+                        } else {
+                            subEq = true;
+                        }
 
-                            if (pdscClass === cClass
-                                && pdscGroup === cGroup
-                                && pdscVersion === cVersion
-                                && pdscCondition === cCondition
-                                && subEq
-                                && Array.isArray(pdscfileList)) {
-                                for (const file of pdscfileList) {
-                                    const category = file['@_category'];
-                                    if (category === 'include') {
-                                        const name = file['@_name'];
-                                        incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${name}`), name);
-                                        hasInc = true;
-                                        break;
-                                    }
-
-                                    if (category === 'header') {
-                                        const name = file['@_name'] as string;
-                                        const pos = name.lastIndexOf("/");
-                                        const inc = name.substring(0, pos);
-                                        if (!incMap.has(inc)) {
-                                            incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${inc}`), inc);
-                                        }
-                                        hasInc = true;
-                                        break;
-                                    }
+                        if (pdscClass === cClass
+                            && pdscGroup === cGroup
+                            && pdscVersion === cVersion
+                            && pdscCondition === cCondition
+                            && subEq
+                            && Array.isArray(pdscfileList)) {
+                            for (const file of pdscfileList) {
+                                const category = file['@_category'];
+                                if (category === 'include') {
+                                    const name = file['@_name'];
+                                    incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${name}`), name);
+                                    hasInc = true;
+                                    break;
                                 }
 
+                                if (category === 'header') {
+                                    const name = file['@_name'] as string;
+                                    const pos = name.lastIndexOf("/");
+                                    const inc = name.substring(0, pos);
+                                    if (!incMap.has(inc)) {
+                                        incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${inc}`), inc);
+                                    }
+                                    hasInc = true;
+                                    break;
+                                }
                             }
-                            if (hasInc) {
-                                break;
-                            }
+
+                        }
+                        if (hasInc) {
+                            break;
                         }
                     }
                 }
             }
         }
+
         cache.clear();
         incMap.forEach((_, key) => {
             incList.push(key);
@@ -1844,6 +1812,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
 
     private prjList: Map<string, KeilProject>;
     private curActiveProject: KeilProject | undefined;
+    private workspacePath: string | undefined;
 
     constructor(context: ExtensionContext) {
         this.prjList = new Map();
@@ -1855,10 +1824,10 @@ class ProjectExplorer implements TreeDataProvider<IView> {
 
     async loadWorkspace() {
         if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
-            const wsFilePath: string = workspace.workspaceFile && /^file:/.test(workspace.workspaceFile.toString()) ?
+            this.workspacePath = workspace.workspaceFile && /^file:/.test(workspace.workspaceFile.toString()) ?
                 dirname(workspace.workspaceFile.fsPath) : workspace.workspaceFolders[0].uri.fsPath;
 
-            const prjWorkspace = new File(wsFilePath);
+            const prjWorkspace = new File(this.workspacePath);
             // channel.show();
             if (prjWorkspace.isDir()) {
                 channel.show();
@@ -1867,7 +1836,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
                 let uvList: string[] = [];
 
                 // Multiply project workspace
-                const uvmwList = await this.findProject(prjWorkspace.path, [/\.uvmpw$/i]);
+                const uvmwList = await this.findProject(prjWorkspace.path, [/\.uvmpw$/i], 1);
                 if (uvmwList && uvmwList.length !== 0) {
                     const options = {
                         attributeNamePrefix: "@_",
@@ -1907,7 +1876,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
                         }
                     });
                 } else {
-                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i]);
+                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], 1);
                     // uvList = workspace.getList([/\.uvproj[x]?$/i], File.emptyFilter);
                 }
 
@@ -1943,7 +1912,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
         }
     }
 
-    async findProject(dir: string, fileFilter?: RegExp[]): Promise<string[]> {
+    async findProject(dir: string, fileFilter?: RegExp[], deep: number = 0): Promise<string[]> {
         const list: string[] = [];
         readdirSync(dir).filter((val) => {
             const path = join(dir, val);
@@ -1983,7 +1952,9 @@ class ProjectExplorer implements TreeDataProvider<IView> {
                         list.push(path);
                     }
                 } else {
-                    list.push(...await this.findProject(path, fileFilter));
+                    if (deep > 0) {
+                        list.push(...await this.findProject(path, fileFilter, 0));
+                    }
                 }
 
             }
@@ -1992,7 +1963,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
     }
 
     async openProject(path: string): Promise<KeilProject | undefined> {
-        const nPrj = new KeilProject(new File(path));
+        const nPrj = new KeilProject(new File(path), this.workspacePath);
         if (!this.prjList.has(nPrj.prjID)) {
 
             await nPrj.load();
