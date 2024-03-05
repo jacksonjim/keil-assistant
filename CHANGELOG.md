@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.1]
+- Fixed:
+- #31 Optimized the dependency of the keil uVision assistant on other expansion packages
+***
+
 ## [v1.9.0]
 - Fixed:
 - #25 #27 Build Error or Warning log cannot goto error file line number
