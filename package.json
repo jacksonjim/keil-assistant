@@ -18,7 +18,9 @@
     "c51",
     "c251",
     "8051",
-    "stm32"
+    "stm32",
+    "ARM7",
+    "ARM9"
   ],
   "homepage": "https://github.com/jacksonjim/keil-assistant",
   "engines": {
@@ -106,6 +108,12 @@
             "type": "array",
             "scope": "resource",
             "markdownDescription": "%keil-assistant.contributes.conf.props.project.fileLocationList.description%",
+            "default": []
+          },
+          "KeilAssistant.Project.CustomIncludePaths": {
+            "type": "array",
+            "scope": "resource",
+            "markdownDescription": "%keil-assistant.contributes.conf.props.project.customIncludePaths.description%",
             "default": []
           }
         }
@@ -371,26 +379,29 @@
     ]
   },
   "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "@types/eslint__js": "^8.42.3",
     "@types/glob": "^8.1.0",
     "@types/he": "^1.2.3",
-    "@types/mocha": "^10.0.6",
+    "@types/mocha": "^10.0.7",
     "@types/node": "^16.x",
     "@types/vscode": "^1.67.0",
-    "@typescript-eslint/eslint-plugin": "^7.1.1",
-    "@typescript-eslint/parser": "^7.1.1",
-    "@vscode/dts": "^0.4.0",
+    "@typescript-eslint/eslint-plugin": "^8.0.1",
+    "@typescript-eslint/parser": "^8.0.1",
+    "@vscode/dts": "^0.4.1",
     "@vscode/l10n-dev": "^0.0.35",
-    "@vscode/test-electron": "^2.4.0",
-    "@vscode/vsce": "^2.27.0",
-    "eslint": "^8.57.0",
-    "fast-xml-parser": "^4.4.0",
+    "@vscode/test-electron": "^2.4.1",
+    "@vscode/vsce": "^2.31.1",
+    "eslint": "^9.8.0",
+    "fast-xml-parser": "^4.4.1",
     "glob": "^8.1.0",
     "iconv-lite": "0.6.3",
-    "mocha": "^10.4.0",
+    "mocha": "^10.7.0",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.1",
-    "typescript": "^5.4.5",
-    "webpack": "^5.92.0",
+    "typescript": "^5.5.4",
+    "typescript-eslint": "^8.0.1",
+    "webpack": "^5.93.0",
     "webpack-cli": "^5.1.4"
   },
   "dependencies": {

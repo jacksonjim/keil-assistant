@@ -13,7 +13,8 @@
     "noUnusedLocals": false,
     "strictNullChecks": true,
     "strict": true, /* enable all strict type-checking options */
-    "forceConsistentCasingInFileNames": true
+    "forceConsistentCasingInFileNames": true,
+    "skipLibCheck": true 
   },
   "include": [
     "test/**/*.ts",

@@ -2,6 +2,13 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.2]
+- Fixed: 
+- #40 open project Error: This uVision project is not a C51 project, but have a 'uvproj' suffix !
+- #39 Support ARM7 and ARM9 MCU
+- #41 Support project custom include paths
+***
+
 ## [v1.9.1]
 - Fixed:
 - #31 Optimized the dependency of the keil uVision assistant on other expansion packages

@@ -583,10 +583,19 @@ abstract class Target implements IView {
 
     static getInstance(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any): Target {
         if (prjInfo.uvprjFile.suffix.toLowerCase() === '.uvproj') {
+            
+            if (targetDOM['TargetOption']['Target51'] !== undefined) {
+                return new C51Target(prjInfo, uvInfo, targetDOM, rteDom);
+            }
+
             if (targetDOM['TargetOption']['Target251'] !== undefined) {
                 return new C251Target(prjInfo, uvInfo, targetDOM, rteDom);
             }
-            return new C51Target(prjInfo, uvInfo, targetDOM, rteDom);
+
+            if (targetDOM['TargetOption']['TargetArmAds'] !== undefined) {
+                return new ArmTarget(prjInfo, uvInfo, targetDOM, rteDom);
+            }
+            return new ArmTarget(prjInfo, uvInfo, targetDOM, rteDom);
         } else {
             return new ArmTarget(prjInfo, uvInfo, targetDOM, rteDom);
         }
@@ -671,6 +680,12 @@ abstract class Target implements IView {
                 this.includes.add(this.project.toAbsolutePath(realPath));
             }
         });
+
+        ResourceManager.getInstance().getProjectFileLocationList().forEach(
+            path => {
+                this.includes.add(this.project.toAbsolutePath(path));
+            }
+        );
 
         // set defines
         this.defines.clear();

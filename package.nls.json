@@ -8,6 +8,7 @@
     "keil-assistant.contributes.conf.props.C251.home.description": "Option Keil (C251) Installation directory ",
     "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision project file name exclude list",
     "keil-assistant.contributes.conf.props.project.fileLocationList.description": "uVision project file locations",
+    "keil-assistant.contributes.conf.props.project.customIncludePaths.description": "uVision project file custom include paths; Use relative paths, like: \r\n\r\n../lib/inc,\r\n\r\n../common/inc",
     "keil-assistant.contributes.commands.project-open.title": "Open keil uVision project",
     "keil-assistant.contributes.commands.project-switch.title": "Switch Target",
     "keil-assistant.contributes.commands.project-active.title": "Active Project",

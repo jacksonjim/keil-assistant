@@ -96,6 +96,10 @@ export class ResourceManager {
     getProjectFileLocationList(): string[] {
         return this.getAppConfig().get<string[]>('Project.FileLocationList') || [];
     }
+    // 增加自定义头文件路径
+    getProjectCustomIncludePaths(): string[] {
+        return this.getAppConfig().get<string[]>('Project.CustomIncludePaths') || [];
+    }
 
     getIconByName(name: string): string {
         return this.iconMap.get(name)!!;

@@ -8,6 +8,7 @@
     "keil-assistant.contributes.conf.props.C251.home.description": "Keil uVision C251 安装目录 可选项",
     "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision 项目文件名排除列表",
     "keil-assistant.contributes.conf.props.project.fileLocationList.description": "uVision 项目文件位置",
+    "keil-assistant.contributes.conf.props.project.customIncludePaths.description": "uVision 项目自定义头文件路径; 使用相对路径, 例如: \r\n\r\n../lib/inc,\r\n\r\n ../common/inc",
     "keil-assistant.contributes.commands.project-open.title": "打开Keil uVision的项目",
     "keil-assistant.contributes.commands.project-switch.title": "切换项目目标",
     "keil-assistant.contributes.commands.project-active.title": "激活项目",
