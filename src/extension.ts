@@ -583,7 +583,7 @@ abstract class Target implements IView {
 
     static getInstance(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any): Target {
         if (prjInfo.uvprjFile.suffix.toLowerCase() === '.uvproj') {
-            
+
             if (targetDOM['TargetOption']['Target51'] !== undefined) {
                 return new C51Target(prjInfo, uvInfo, targetDOM, rteDom);
             }
@@ -1670,7 +1670,8 @@ class ArmTarget extends Target {
     }
 
     protected getRTEIncludes(_target: any, rteDom: any): string[] | undefined {
-        if (!rteDom) { return undefined; }
+        if (!rteDom)
+            return undefined;
         //
         const componentList = rteDom['components']['component'];
         let components: Array<any> = [];
@@ -1708,8 +1709,10 @@ class ArmTarget extends Target {
                 components.push(componentList);
             }
         }
+
         for (const component of components) {
             const cClass = component['@_Cclass'];
+            const cBundle = component['@_Cbundle'];
             const cGroup = component['@_Cgroup'];
             const cSub = component['@_Csub'];
             const cVendor = component['@_Cvendor'];
@@ -1734,11 +1737,21 @@ class ArmTarget extends Target {
                     continue;
                 }
             }
+
             if (pdscDom) {
-                const pdscComponents = pdscDom['package']['components']['component'];
+                let pdscComponents;
+                let pdscBundle = undefined;
+                if (cBundle !== undefined) {
+                    pdscComponents = pdscDom['package']['components']['bundle']['component'];
+                    pdscBundle = pdscDom['package']['components']['bundle']['@_Cbundle']
+                } else {
+                    pdscComponents = pdscDom['package']['components']['component'];
+                }
+
                 if (Array.isArray(pdscComponents)) {
                     let hasInc = false;
                     for (const pdscComponent of pdscComponents) {
+                        // console.log(pdscComponent);
                         const pdscClass = pdscComponent['@_Cclass'];
                         const pdscGroup = pdscComponent['@_Cgroup'];
                         const pdscCondition = pdscComponent['@_condition'];
@@ -1752,20 +1765,27 @@ class ArmTarget extends Target {
                             subEq = true;
                         }
 
-                        if (pdscClass === cClass
-                            && pdscGroup === cGroup
+                        if ((pdscClass === cClass || pdscBundle == cBundle) &&
+                            pdscGroup === cGroup
                             && pdscVersion === cVersion
                             && pdscCondition === cCondition
                             && subEq
                             && Array.isArray(pdscfileList)) {
+                            // console.log(cClass,pdscfileList);
                             for (const file of pdscfileList) {
                                 const category = file['@_category'];
+                                const attr = file['@_attr'];
+                                if (attr === 'config')
+                                    continue;
                                 if (category === 'include') {
                                     const name = file['@_name'];
-                                    incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${name}`), name);
+                                    const pos = name.lastIndexOf("/");
+                                    const inc = name.substring(0, pos);
+                                    incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${inc}`), inc);
                                     hasInc = true;
                                     break;
                                 }
+
 
                                 if (category === 'header') {
                                     const name = file['@_name'] as string;

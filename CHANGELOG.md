@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.23]
+- Fixed: 
+- #41 RTE ARM Compiler include
+***
+
 ## [v1.9.2]
 - Fixed: 
 - #40 open project Error: This uVision project is not a C51 project, but have a 'uvproj' suffix !
