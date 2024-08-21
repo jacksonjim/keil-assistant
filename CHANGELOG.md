@@ -2,9 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
-## [v1.9.23]
+## [v1.9.3]
 - Fixed: 
 - #41 RTE ARM Compiler include
+- Added support for multi-language menus;
+- V1.9.3+ version ⚠️ adjustment: VsCode supports the minimum version of vscode engines V1.73.0+, please update to V1.73.0 or later, this adjustment is because the minimum supported version of the multi-language version is 1.73.0; [**l10n** This API, introduced in VS Code 1.73](https://github.com/microsoft/vscode-l10n/blob/main/README.md)
 ***
 
 ## [v1.9.2]

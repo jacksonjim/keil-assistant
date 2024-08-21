@@ -1,0 +1,17 @@
+{
+  "Open keil uVision project": "Open keil uVision project",
+  "keil project load done ! switch workspace ?": "keil project load done !, switch workspace ?",
+  "Open project failed! msg": "Open project failed! msg",
+  "switch project target": "switch project target",
+  "Task isRuning Please wait it finished try !": "Task isRuning Please wait it finished try !",
+  "The workspace directory is empty, Goto open the workspace directory?": "The workspace directory is empty, Goto open the workspace directory?",
+  "Ok": "Ok",
+  "Cancel": "Cancel",
+  "Later": "Later",
+  "Error: open project": "Error: open project",
+  "Failed, The workspace Path": "Failed, The workspace Path",
+  "is NULL , Please use vscode open the project folder.": "is NULL , Please use vscode open the project folder.",
+  "please select a target name for keil project": "please select a target name for keil project",
+  "Not found any active project !": "Not found any active project !",
+  "Not found file": "Not found file"
+}

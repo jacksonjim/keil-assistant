@@ -1,7 +1,7 @@
 import {
     Event, EventEmitter, ExtensionContext, OutputChannel, ProviderResult,
     StatusBarAlignment, StatusBarItem, TreeDataProvider, TreeItem, TreeItemCollapsibleState,
-    Uri, commands, env, window, workspace
+    Uri, commands, env, l10n, window, workspace
 } from 'vscode';
 
 import { createHash } from 'crypto';
@@ -46,7 +46,7 @@ export function activate(context: ExtensionContext) {
 
     subscriber.push(commands.registerCommand('explorer.open', async () => {
         const uri = await window.showOpenDialog({
-            openLabel: 'Open a keil project',
+            openLabel: l10n.t('Open keil uVision project'),
             canSelectFolders: false,
             canSelectMany: false,
             filters: {
@@ -60,16 +60,16 @@ export function activate(context: ExtensionContext) {
                 // load project
                 const uvPrjPath = uri[0].fsPath;
                 await prjExplorer.openProject(uvPrjPath);
-
                 // switch workspace
-                const result = await window.showInformationMessage(
-                    'keil project load done !, switch workspace ?', 'Ok', 'Later');
-                if (result === 'Ok') {
+                const msg = l10n.t('keil project load done ! switch workspace ?');
+                const result = await window.showInformationMessage(msg, l10n.t('Ok'), l10n.t('Later'));
+                if (result === l10n.t('Ok')) {
                     openWorkspace(new File(dirname(uvPrjPath)));
                 }
             }
         } catch (error) {
-            window.showErrorMessage(`open project failed !, msg: ${(<Error>error).message}`);
+            const errMsg = l10n.t('Open project failed! msg');
+            window.showErrorMessage(`${errMsg}: ${(<Error>error).message}`);
         }
     }));
 
@@ -113,13 +113,13 @@ function getMD5(data: string): string {
 }
 
 function openWorkspace(wsFile: File) {
-    commands.executeCommand('openFolder', Uri.parse(wsFile.toUri()));
+    commands.executeCommand('vscode.openFolder', Uri.parse(wsFile.toUri()));
 }
 
 function updateStatusBarItem(prjName: string | undefined): void {
     if (prjName !== undefined) {
         myStatusBarItem.text = prjName;
-        myStatusBarItem.tooltip = "switch project target";
+        myStatusBarItem.tooltip = l10n.t('switch project target');
         myStatusBarItem.show();
     } else {
         myStatusBarItem.hide();
@@ -785,7 +785,8 @@ abstract class Target implements IView {
 
     private runAsyncTask(name: string, type: 'b' | 'r' | 'f' = 'b') {
         if (this.isTaskRunning) {
-            window.showWarningMessage(`Task isRuning Please wait it finished try !`);
+            const msg = l10n.t('Task isRuning Please wait it finished try !');
+            window.showWarningMessage(msg);
             return;
         }
         this.isTaskRunning = true;
@@ -2000,6 +2001,23 @@ class ProjectExplorer implements TreeDataProvider<IView> {
     }
 
     async openProject(path: string): Promise<KeilProject | undefined> {
+        if (this.workspacePath === undefined) {
+            const msg = l10n.t('The workspace directory is empty, Goto open the workspace directory?');
+            const result = await window.showInformationMessage(msg, l10n.t('Ok'), l10n.t('Cancel'));
+            if (result === l10n.t('Ok')) {
+                openWorkspace(new File(dirname(path)));
+                return;
+            }
+            if (result === l10n.t('Cancel')) {
+                const fmsg = l10n.t('Error: open project');
+                const msg = l10n.t('Failed, The workspace Path');
+                const emsg = l10n.t('is NULL , Please use vscode open the project folder.');
+                const errorMsg = `${fmsg} ${path} ${msg} ${this.workspacePath} ${emsg}`;
+                channel.appendLine(errorMsg);
+                window.showErrorMessage(errorMsg);
+                throw Error(errorMsg);
+            }
+        }
         const nPrj = new KeilProject(new File(path), this.workspacePath);
         if (!this.prjList.has(nPrj.prjID)) {
 
@@ -2044,7 +2062,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
             const tList = prj.getTargets();
             const targetName = await window.showQuickPick(tList.map((ele) => { return ele.targetName; }), {
                 canPickMany: false,
-                placeHolder: 'please select a target name for keil project'
+                placeHolder: l10n.t('please select a target name for keil project')
             });
             if (targetName) {
                 prj.setActiveTarget(targetName);
@@ -2057,7 +2075,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
             const tList = this.curActiveProject?.getTargets();
             const targetName = await window.showQuickPick(tList.map((ele) => { return ele.targetName; }), {
                 canPickMany: false,
-                placeHolder: 'please select a target name for keil project'
+                placeHolder: l10n.t('please select a target name for keil project')
             });
             if (targetName) {
                 this.curActiveProject?.setActiveTarget(targetName);
@@ -2081,7 +2099,7 @@ class ProjectExplorer implements TreeDataProvider<IView> {
             if (this.curActiveProject) {
                 return this.curActiveProject.getActiveTarget();
             } else {
-                window.showWarningMessage('Not found any active project !');
+                window.showWarningMessage(l10n.t('Not found any active project !'));
             }
         }
     }
@@ -2121,7 +2139,8 @@ class ProjectExplorer implements TreeDataProvider<IView> {
                         window.showTextDocument(Uri.parse(file.toUri()), { preview: isPreview });
 
                     } else {
-                        window.showWarningMessage(`Not found file: ${source.file.path}`);
+                        const msg = l10n.t('Not found file');
+                        window.showWarningMessage(`${msg}: ${source.file.path}`);
                     }
                 }
                 break;

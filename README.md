@@ -55,10 +55,12 @@ vscode 上的 Keil 辅助工具，与 c/c++ 插件配合使用.
  ![setting](./res/preview/setting.png)
 
 - v1.7.3+ 版本开始只需要配置Keil安装目录即可，简化相关配置项目(默认目录为:C:\Keil_v5)
-- 
+
 - v1.8.0+ 版本方便部分用户需要单独设置C51或C251安装目录增加一个可选项设置，默认只需要设置MDK的安装目录即可，仅支持: MDK, C51, C251; 详情参考设置中有示例
   
  ![setting](./res/preview/new_setting.png)
+
+- v1.9.3+ 版本⚠️调整支持最低vscode engines的版本为 V1.73.0+的VsCode, 麻烦请更新为V1.73.0后的版本,此次调整因为多语言版本最低支持的版本为1.73.0; [**l10n** 此API在VS Code 1.73 中引入](https://github.com/microsoft/vscode-l10n/blob/main/README.md)
 
 ---
 

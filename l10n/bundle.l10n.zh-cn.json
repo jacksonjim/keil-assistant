@@ -1,0 +1,17 @@
+{
+  "Open keil uVision project": "打开keil uVision项目",
+  "keil project load done ! switch workspace ?": "Keil 项目加载完成！是否切换工作区？",
+  "Open project failed! msg": "打开项目失败! 消息",
+  "switch project target": "切换到此项目",
+  "Task isRuning Please wait it finished try !": "任务正在运行，请稍候，等其完成后再尝试!",
+  "The workspace directory is empty, Goto open the workspace directory?": "工作区目录是空的，转到打开工作区目录?",
+  "Ok": "确定",
+  "Cancel": "取消",
+  "Later": "稍后",
+  "Error: open project": "错误：打开项目",
+  "Failed, The workspace Path": "失败，此工作区路径",
+  "is NULL , Please use vscode open the project folder.": "为空， 请使用vscode打开此项目的根目录",
+  "please select a target name for keil project": "请选择Keil 项目中的目标名称",
+  "Not found any active project !": "找不到任何激活的项目!",
+  "Not found file": "找不到文件"
+}
