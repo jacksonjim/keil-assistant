@@ -546,7 +546,7 @@ abstract class Target implements IView {
         this.rteDom = rteDom;
         this.uvInfo = uvInfo;
         this.prjID = prjInfo.prjID;
-        this.targetName = targetDOM['TargetName'];
+        this.targetName = `${targetDOM['TargetName']}`;
         this.label = this.targetName;
         this.tooltip = this.targetName;
         this.cppConfigName = this.targetName;
@@ -636,7 +636,7 @@ abstract class Target implements IView {
 
         if (index === -1) {
             configList.push({
-                name: this.cppConfigName,
+                name: `${this.cppConfigName}`,
                 includePath: Array.from(this.includes).concat(['${default}', '${workspaceFolder}/**']),
                 defines: Array.from(this.defines),
                 intelliSenseMode: '${default}'
@@ -660,8 +660,6 @@ abstract class Target implements IView {
         const _groups: any = this.getGroups(this.targetDOM);
         const sysIncludes = this.getSystemIncludes(this.targetDOM);
         const rteIncludes = this.getRTEIncludes(this.targetDOM, this.rteDom);
-
-        // const targetName = this.targetDOM['TargetName'];
 
         // set includes
         this.includes.clear();

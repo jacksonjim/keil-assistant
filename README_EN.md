@@ -58,7 +58,17 @@ It provides syntax highlighting, code snippets for Keil projects, and supports c
 > 
 2. Click **Open the Project** icon or **Use Vscode to directly open the directory where keil project file (.uvproj) is located**, and the keil project will be automatically loaded by the plug-in;
  
- ![load](./res/preview/load.png)
+  - Open *.uvproj project file
+  
+    ![load](./res/preview/load.png)
+
+  - Quickly open a project 1  **Right click on the project root folder --> open through vscode**
+    
+    ![load](./res/preview/load1.png)
+  
+  - Quickly open a project 2  **In vscode-->File--Open the folder (shortcut key: Ctrl+k Ctrl+O), select the directory where the project is located**
+    ![load](./res/preview/load2.png)
+    ![load](./res/preview/load3.png)
 
 ### Common operations
 
