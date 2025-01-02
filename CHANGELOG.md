@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.4]
+- Fixed: 
+- remove RTE will inclue more header files; do not inclue its.
+***
+
 ## [v1.9.3]
 - Fixed: 
 - #41 RTE ARM Compiler include

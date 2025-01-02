@@ -242,6 +242,8 @@ interface KeilProjectInfo {
 
     vscodeDir: File;
 
+    workspaceDir: string | undefined;
+
     uvprjFile: File;
 
     logger: Console;
@@ -269,7 +271,7 @@ class KeilProject implements IView, KeilProjectInfo {
     };
 
     //-------------
-
+    workspaceDir: string | undefined;
     vscodeDir: File;
     uvprjFile: File;
     logger: Console;
@@ -292,6 +294,7 @@ class KeilProject implements IView, KeilProjectInfo {
         this._event = new EventsEmitter();
         this.uVsionFileInfo = <UVisonInfo>{};
         this.targetList = [];
+        this.workspaceDir = workspace;
         this.vscodeDir = new File(workspace + File.sep + '.vscode');
         this.vscodeDir.createDir();
         const logPath = this.vscodeDir.path + File.sep + 'keil-assistant.log';
@@ -554,25 +557,6 @@ abstract class Target implements IView {
         this.defines = new Set();
         this.fGroups = [];
         this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + this.targetName + '_uv4.log');
-        /*this.uv4LogLockFileWatcher = new FileWatcher(new File(this.uv4LogFile.path + '.lock'));
-
-        if (!this.uv4LogLockFileWatcher.file.isFile()) { // create file if not existed
-            this.uv4LogLockFileWatcher.file.write('');
-        }
-
-        this.uv4LogLockFileWatcher.watch();
-        this.uv4LogLockFileWatcher.onChanged = () => this.updateSourceRefs();
-        this.uv4LogLockFileWatcher.on('error', () => {
-
-            this.uv4LogLockFileWatcher.close();
-
-            if (!this.uv4LogLockFileWatcher.file.isFile()) { // create file if not existed
-                this.uv4LogLockFileWatcher.file.write('');
-            }
-
-            this.uv4LogLockFileWatcher.watch();
-        });*/
-
     }
 
 
@@ -664,18 +648,26 @@ abstract class Target implements IView {
         // set includes
         this.includes.clear();
 
-        let incList = incListStr.split(';');
+        let incList: string[] = [];
         if (sysIncludes) {
             incList = incList.concat(sysIncludes);
         }
         if (rteIncludes) {
             incList = incList.concat(rteIncludes);
         }
+        incList = incList.concat(incListStr.split(';'));
 
         incList.forEach((path) => {
             const realPath = path.trim();
             if (realPath !== '') {
-                this.includes.add(this.project.toAbsolutePath(realPath));
+                const path = realPath.replace(/\//g, File.sep);
+                let result = path.replace(/(\.\.|\.)[\/\\\\]/,"");
+                if (/^[a-z]:/i.test(result)) {
+                    result = normalize(result);
+                } else {
+                    result = normalize(result);
+                }
+                this.includes.add(result);
             }
         });
 
@@ -764,7 +756,6 @@ abstract class Target implements IView {
                     }
 
                     const nFile = new Source(this.prjID, f, !isFileExcluded);
-                    this.includes.add(f.dir);
                     nGrp.sources.push(nFile);
                 }
 
@@ -1674,6 +1665,9 @@ class ArmTarget extends Target {
         //
         const componentList = rteDom['components']['component'];
         let components: Array<any> = [];
+        const rteFiles = rteDom['files']['file'];
+        let rtefileList: Array<any> = [];
+        const targetInfos = rteDom['apis']['api']['targetInfos']['targetInfo'];
         let incList: string[] = [];
         const incMap: Map<string, string> = new Map();
         const keilRootDir = ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform());
@@ -1785,8 +1779,8 @@ class ArmTarget extends Target {
                                     break;
                                 }
 
-
-                                if (category === 'header') {
+                                // delete
+                                /* if (category === 'header') {
                                     const name = file['@_name'] as string;
                                     const pos = name.lastIndexOf("/");
                                     const inc = name.substring(0, pos);
@@ -1795,7 +1789,7 @@ class ArmTarget extends Target {
                                     }
                                     hasInc = true;
                                     break;
-                                }
+                                } */
                             }
 
                         }
@@ -1804,6 +1798,32 @@ class ArmTarget extends Target {
                         }
                     }
                 }
+            }
+        }
+
+
+        const prjPath = this.project.uvprjFile.dir;
+        const wk = `${this.project.workspaceDir}${File.sep}`
+        const prjRoot = prjPath.replace(wk, "");
+        if (Array.isArray(rteFiles)) {
+            rtefileList = rtefileList.concat(rteFiles);
+            for (const rtefile of rtefileList) {
+                const fAttr = rtefile['@_attr'];
+                const fCategory = rtefile['@_category'];
+                const instance = rtefile['instance'];
+                if (fAttr === 'config' && fCategory === 'header') {
+                    const incStr = instance['#text'];
+                    const pos = incStr.lastIndexOf("\\");
+                    const inc = incStr.substring(0, pos);
+                    incMap.set(normalize(`${prjRoot}/${inc}`), inc);
+                }
+            }
+        }
+        if (Array.isArray(targetInfos)) {
+            for (const targetInfo of targetInfos) {
+                const inc = targetInfo['@_name'];
+                if (inc === this.targetName)
+                    incMap.set(normalize(`${prjRoot}/RTE/_${inc}`), inc);
             }
         }
 
