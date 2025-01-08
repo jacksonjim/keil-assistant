@@ -13,7 +13,7 @@ export class ResourceManager {
 
     private extensionDir: File;
     private dirMap: Map<string, File>;
-    private iconMap: Map<string, string|vscode.Uri>;
+    private iconMap: Map<string, string>;
 
     private constructor(context: vscode.ExtensionContext) {
         this.extensionDir = new File(context.extensionPath);
@@ -101,7 +101,7 @@ export class ResourceManager {
         return this.getAppConfig().get<string[]>('Project.CustomIncludePaths') || [];
     }
 
-    getIconByName(name: string): string|vscode.Uri {
-        return this.iconMap.get(name)!!;
+    getIconByName(name: string): vscode.Uri {
+        return vscode.Uri.parse(this.iconMap.get(name)!,true);
     }
 }
