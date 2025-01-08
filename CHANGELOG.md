@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.5]
+- Fixed: 
+- #53 #56 Error: open project TypeError: Cannot read properties of undefined (reading 'targetInfos')
+***
+
 ## [v1.9.4]
 - Fixed: 
 - remove RTE will inclue more header files; do not inclue its.

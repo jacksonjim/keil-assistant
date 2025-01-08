@@ -661,7 +661,7 @@ abstract class Target implements IView {
             const realPath = path.trim();
             if (realPath !== '') {
                 const path = realPath.replace(/\//g, File.sep);
-                let result = path.replace(/(\.\.|\.)[\/\\\\]/,"");
+                let result = path.replace(/(\.\.|\.)[\/\\\\]/, "");
                 if (/^[a-z]:/i.test(result)) {
                     result = normalize(result);
                 } else {
@@ -1667,7 +1667,10 @@ class ArmTarget extends Target {
         let components: Array<any> = [];
         const rteFiles = rteDom['files']['file'];
         let rtefileList: Array<any> = [];
-        const targetInfos = rteDom['apis']['api']['targetInfos']['targetInfo'];
+        const apiList = rteDom['apis']['api'];
+        let targetInfos = undefined;
+        if (apiList !== undefined)
+            targetInfos = apiList['targetInfos']['targetInfo'];
         let incList: string[] = [];
         const incMap: Map<string, string> = new Map();
         const keilRootDir = ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform());

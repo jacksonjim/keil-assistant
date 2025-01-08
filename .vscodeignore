@@ -5,6 +5,7 @@
 
 # ignore binaries
 obj/**
+*.exe
 
 # ignore source files
 tools/**
