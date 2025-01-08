@@ -2,9 +2,9 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
-## [v1.9.5]
+## [v1.9.6]
 - Fixed: 
-- #53 #56 Error: open project TypeError: Cannot read properties of undefined (reading 'targetInfos')
+- #56 1.9.4无法识别本地Keil工程 Error: open project TypeError: Cannot read properties of undefined (reading 'targetInfos')
 ***
 
 ## [v1.9.4]

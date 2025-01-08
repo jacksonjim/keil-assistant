@@ -36,7 +36,7 @@ jobs:
         run: npm install --global @vscode/vsce
 
       - name: Build
-        run: vsce package
+        run: vsce package --no-yarn
         # run: yarn vsce-packge
 
       # - name: Create pkg dist dir

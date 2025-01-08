@@ -102,6 +102,7 @@ export class ResourceManager {
     }
 
     getIconByName(name: string): vscode.Uri {
-        return vscode.Uri.parse(this.iconMap.get(name)!,true);
+        const icon = this.iconMap.get(name);
+        return vscode.Uri.file(icon!);
     }
 }
