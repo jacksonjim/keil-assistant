@@ -16,16 +16,18 @@ import { Time } from './node_utility/Time';
 import { CmdLineHandler } from './CmdLineHandler';
 
 import { XMLParser } from 'fast-xml-parser';
-import { readFileSync, createWriteStream, stat, readdirSync, statSync, writeFileSync, openSync, readSync, closeSync, watchFile } from 'fs';
+import {
+    readFileSync, createWriteStream, stat, readdirSync, statSync,
+    writeFileSync, openSync, readSync, closeSync, watchFile, existsSync
+} from 'fs';
 import { decode as heDecode } from 'he';
 import { decode } from 'iconv-lite';
 
 let myStatusBarItem: StatusBarItem;
 let channel: OutputChannel;
 
-
 export function activate(context: ExtensionContext) {
-    console.log('---- keil-assistant actived ----');
+    // console.log('---- keil-assistant actived ----');
     if (channel === undefined) {
         channel = window.createOutputChannel('keil-vscode');
     }
@@ -100,7 +102,7 @@ export function activate(context: ExtensionContext) {
 }
 
 export function deactivate() {
-    console.log('---- keil-assistant closed ----');
+    // console.log('---- keil-assistant closed ----');
     channel.dispose();
 }
 
@@ -1718,15 +1720,17 @@ class ArmTarget extends Target {
             const pkgName = cPackage['@_name'];
             const pkgVendor = cPackage['@_vendor'];
             const pkgVersion = cPackage['@_version'];
-            const cRootDir = `${packsDir}${File.sep}${pkgVendor}${File.sep}${pkgName}${File.sep}${pkgVersion}`;
-            const pdscPath = `${cRootDir}${File.sep}${cVendor}.${pkgName}.pdsc`;
+            const cRootDir = join(packsDir, pkgVendor, pkgName, pkgVersion);
+            const pdscPath = join(cRootDir, `${cVendor}.${pkgName}.pdsc`);
 
             if (cache.has(pdscPath)) {
                 pdscDom = cache.get(pdscPath);
             } else {
-                const pdsc = new File(pdscPath);
-                if (pdsc.isExist() && pdsc.isFile()) {
-                    const pdscdoc = pdsc.read();
+                if (!existsSync(pdscPath))
+                    continue;
+                const pdscSta = statSync(pdscPath);
+                if (pdscSta.isFile()) {
+                    const pdscdoc = readFileSync(pdscPath, { encoding: 'utf-8' });
                     pdscDom = parser.parse(pdscdoc);
                     cache.set(pdscPath, pdscDom);
                 } else {
@@ -1747,7 +1751,6 @@ class ArmTarget extends Target {
                 if (Array.isArray(pdscComponents)) {
                     let hasInc = false;
                     for (const pdscComponent of pdscComponents) {
-                        // console.log(pdscComponent);
                         const pdscClass = pdscComponent['@_Cclass'];
                         const pdscGroup = pdscComponent['@_Cgroup'];
                         const pdscCondition = pdscComponent['@_condition'];
@@ -1767,7 +1770,6 @@ class ArmTarget extends Target {
                             && pdscCondition === cCondition
                             && subEq
                             && Array.isArray(pdscfileList)) {
-                            // console.log(cClass,pdscfileList);
                             for (const file of pdscfileList) {
                                 const category = file['@_category'];
                                 const attr = file['@_attr'];
@@ -1775,10 +1777,11 @@ class ArmTarget extends Target {
                                     continue;
                                 if (category === 'include') {
                                     const name = file['@_name'];
-                                    const pos = name.lastIndexOf("/");
-                                    const inc = name.substring(0, pos);
-                                    incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${inc}`), inc);
-                                    hasInc = true;
+                                    const incPath = resolve(join(cRootDir, name));
+                                    if (existsSync(incPath)) {
+                                        incMap.set(incPath, name);
+                                        hasInc = true;
+                                    }
                                     break;
                                 }
 
@@ -1806,8 +1809,8 @@ class ArmTarget extends Target {
 
 
         const prjPath = this.project.uvprjFile.dir;
-        const wk = `${this.project.workspaceDir}${File.sep}`
-        const prjRoot = prjPath.replace(wk, "");
+        const wkd = this.project.workspaceDir;
+        const prjRoot = prjPath.replace(wkd!, ".");
         if (Array.isArray(rteFiles)) {
             rtefileList = rtefileList.concat(rteFiles);
             for (const rtefile of rtefileList) {
@@ -1816,17 +1819,19 @@ class ArmTarget extends Target {
                 const instance = rtefile['instance'];
                 if (fAttr === 'config' && fCategory === 'header') {
                     const incStr = instance['#text'];
-                    const pos = incStr.lastIndexOf("\\");
-                    const inc = incStr.substring(0, pos);
-                    incMap.set(normalize(`${prjRoot}/${inc}`), inc);
+                    const incPath = resolve(join(prjRoot, incStr));
+                    if (existsSync(incPath))
+                        incMap.set(incPath, incStr);
                 }
             }
         }
         if (Array.isArray(targetInfos)) {
             for (const targetInfo of targetInfos) {
                 const inc = targetInfo['@_name'];
-                if (inc === this.targetName)
-                    incMap.set(normalize(`${prjRoot}/RTE/_${inc}`), inc);
+                const incPath = join(prjRoot,"RTE",`_${inc}`);
+                if (inc === this.targetName) {
+                    incMap.set(incPath, inc);
+                }
             }
         }
 
