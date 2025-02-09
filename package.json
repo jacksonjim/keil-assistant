@@ -44,12 +44,7 @@
     "email": "jacksonjim@foxmail.com"
   },
   "extensionPack": [],
-  "extensionDependencies": [
-    "ms-vscode.cpptools",
-    "ms-vscode.cpptools-themes",
-    "jeff-hykin.better-cpp-syntax",
-    "dan-c-underwood.arm"
-  ],
+  "extensionDependencies": [],
   "extensionKind": [
     "workspace"
   ],
