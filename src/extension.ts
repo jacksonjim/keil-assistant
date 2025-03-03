@@ -659,11 +659,11 @@ abstract class Target implements IView {
         }
         incList = incList.concat(incListStr.split(';'));
 
-        incList.forEach((path) => {
-            const realPath = path.trim();
+        incList.forEach((incPath) => {
+            const realPath = incPath.trim();
             if (realPath !== '') {
-                const path = realPath.replace(/\//g, File.sep);
-                let result = path.replace(/(\.\.|\.)[\/\\\\]/, "");
+                const normalizedPath = realPath.replace(/\//g, File.sep);
+                let result = normalizedPath;
                 if (/^[a-z]:/i.test(result)) {
                     result = normalize(result);
                 } else {
@@ -674,10 +674,11 @@ abstract class Target implements IView {
         });
 
         ResourceManager.getInstance().getProjectFileLocationList().forEach(
-            path => {
-                this.includes.add(this.project.toAbsolutePath(path));
+            filePath => {
+                this.includes.add(this.project.toAbsolutePath(filePath));
             }
         );
+
 
         // set defines
         this.defines.clear();
@@ -1828,7 +1829,7 @@ class ArmTarget extends Target {
         if (Array.isArray(targetInfos)) {
             for (const targetInfo of targetInfos) {
                 const inc = targetInfo['@_name'];
-                const incPath = join(prjRoot,"RTE",`_${inc}`);
+                const incPath = join(prjRoot, "RTE", `_${inc}`);
                 if (inc === this.targetName) {
                     incMap.set(incPath, inc);
                 }
