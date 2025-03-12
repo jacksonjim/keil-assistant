@@ -6,7 +6,7 @@ import {
 
 import { createHash } from 'crypto';
 import { EventEmitter as EventsEmitter } from 'events';
-import { normalize, dirname, resolve, join } from 'path';
+import { normalize, dirname, resolve, join, extname } from 'path';
 import { spawn, execSync } from 'child_process';
 
 import { File } from './node_utility/File';
@@ -365,19 +365,18 @@ class KeilProject implements IView, KeilProjectInfo {
         try {
             const parser = new XMLParser(options);
             const xmldoc = this.uvprjFile.read();
-            doc = parser.parse(xmldoc, options);
-
+            doc = parser.parse(xmldoc, options);    
         } catch (e) {
             console.error(e);
             channel.show();
             channel.appendLine(`Error:${e}`);
         }
 
-        const targets = doc['Project']['Targets']['Target'];
-        const rteDom = doc['Project']['RTE'];
+        const targets = doc.Project.Targets.Target;
+        const rteDom = doc.Project.RTE;
 
         // init uVsion info
-        this.uVsionFileInfo.schemaVersion = doc['Project']['SchemaVersion'];
+        this.uVsionFileInfo.schemaVersion = doc.Project.SchemaVersion;
         // console.log(doc, targets);
         if (Array.isArray(targets)) {
             for (const target of targets) {
@@ -592,9 +591,36 @@ abstract class Target implements IView {
             configurations: [
                 {
                     name: this.cppConfigName,
+                    /*
+                    ARMCCv5  → gcc-arm 模式
+                    ARMCLANG → clang-arm 模式
+                    ARMCCv6  → clang-arm 模式
+                    纯C89    → gcc-x64 模式
+                    纯C99    → gcc-x64 模式 
+                    纯C11    → clang-x64 模式
+                    */
+                    intelliSenseMode: '${default}',// gcc-arm-embedded gcc-x64 gcc-arm clang-x64 clang-arm
+                    compilerPath: undefined,
+                    /*  
+                    C89 Mode        → 对应uC89
+                    C99 Mode        → 对应uC99
+                    C11 Mode        → 对应uC11
+                    C17 Mode        → 对应uC17
+                    GNU extensions  → 对应uGnu
+                 
+                     */
+                    cStandard: undefined,
+                    /*  
+                    C++98 Mode      → 对应uCpp98
+                    C++03 Mode      → 对应uCpp03
+                    C++11 Mode      → 对应uCpp11
+                    C++14 Mode      → 对应uCpp14
+                    C++17 Mode      → 对应uCpp17
+                    C++20 Mode      → 对应uCpp20
+                     */
+                    cppStandard: undefined,
                     includePath: undefined,
-                    defines: undefined,
-                    intelliSenseMode: '${default}'
+                    defines: undefined
                 }
             ],
             version: 4
@@ -1198,7 +1224,6 @@ class ArmTarget extends Target {
         '__attribute__(x)=',
         '__nonnull__(x)=',
         '__register=',
-
         '__breakpoint(x)=',
         '__cdp(x,y,z)=',
         '__clrex()=',
@@ -1267,7 +1292,6 @@ class ArmTarget extends Target {
         '__register=',
         '__pure=',
         '__value_in_regs=',
-
         '__breakpoint(x)=',
         '__current_pc()=0U',
         '__current_sp()=0U',
@@ -1280,7 +1304,6 @@ class ArmTarget extends Target {
         '__schedule_barrier()=',
         '__semihost(x,y)=0',
         '__vfp_status(x,y)=0',
-
         '__builtin_arm_nop()=',
         '__builtin_arm_wfi()=',
         '__builtin_arm_wfe()=',
@@ -1290,11 +1313,9 @@ class ArmTarget extends Target {
         '__builtin_arm_isb(x)=',
         '__builtin_arm_dsb(x)=',
         '__builtin_arm_dmb(x)=',
-
         '__builtin_bswap32(x)=0U',
         '__builtin_bswap16(x)=0U',
         '__builtin_arm_rbit(x)=0U',
-
         '__builtin_clz(x)=0U',
         '__builtin_arm_ldrex(x)=0U',
         '__builtin_arm_strex(x,y)=0U',
@@ -1337,18 +1358,14 @@ class ArmTarget extends Target {
             const line = _line[_line.length - 1] === '\\' ? _line.substring(0, _line.length - 1) : _line; // remove char '\'
             const subLines = line.trim().split(/(?<![\\:]) /);
 
-            if (lineIndex === 0) // first line
-            {
-                for (let i = 1; i < subLines.length; i++) // skip first sub line
-                {
-                    resultList.add(subLines[i].trim().replace(/\\ /g, " "));
+            // Skip the first sub line for the first line only
+            const startIndex = (lineIndex === 0) ? 1 : 0;
+
+            for (let i = startIndex; i < subLines.length; i++) {
+                const item = subLines[i].trim().replace(/\\ /g, " ");
+                if (item) { // Ensure the item is not empty
+                    resultList.add(item);
                 }
-            }
-            else  // other lines, first char is whitespace
-            {
-                subLines.forEach((item) => {
-                    resultList.add(item.trim().replace(/\\ /g, " "));
-                });
             }
         }
 
@@ -1409,14 +1426,15 @@ class ArmTarget extends Target {
 
     private getArmClangMacroList(armClangPath: string, armClangCpu?: string): string[] {
         try {
+            // armclang.exe --target=arm-arm-none-eabi -E -dM -xc - < nul
             const cmdLine = CmdLineHandler.quoteString(armClangPath, '"')
-                + ' ' + ['--target=arm-arm-none-eabi', armClangCpu, '-E', '-dM', '-', '<nul'].join(' ');
+                + ' ' + ['--target=arm-arm-none-eabi', armClangCpu, '-E', '-dM', '-xc', '-', '<', 'nul'].join(' ');
 
             const lines = execSync(cmdLine).toString().split(/\r\n|\n/);
             const resList: string[] = [];
             const mHandler = new MacroHandler();
 
-            lines.filter((line) => { return line.trim() !== ''; })
+            lines.filter((line) => line.trim() !== '')
                 .forEach((line) => {
                     const value = mHandler.toExpression(line);
                     if (value) {
@@ -1923,48 +1941,49 @@ class ProjectExplorer implements TreeDataProvider<IView> {
                     };
                     const xmlParser = new XMLParser(options);
                     uvmwList.forEach(uvwPath => {
-                        let stat = statSync(uvwPath);
-                        if (stat.isFile()) {
-                            const uvmpwXml = readFileSync(uvwPath);
-                            const uvmpw = xmlParser.parse(uvmpwXml);
-                            const projectList = uvmpw['ProjectWorkspace']['project'];
-                            if (Array.isArray(projectList)) {
-                                uvList = projectList.map<string>(p => {
-                                    let path = p['PathAndName'] as string;
-                                    if (path.indexOf('.\\') !== -1) {
-                                        path = path.replace('.\\', '');
-                                        path = `${prjWorkspace.path}${File.sep}${path}`;
-                                    }
-                                    return path;
-                                });
+                        try {
+                            const stat = statSync(uvwPath);
+                            if (stat.isFile()) {
+                                const uvmpwXml = readFileSync(uvwPath);
+                                const uvmpw = xmlParser.parse(uvmpwXml);
+                                const projectList = uvmpw['ProjectWorkspace']['project'];
+                                if (Array.isArray(projectList)) {
+                                    uvList = uvList.concat(projectList.map<string>(p => {
+                                        let path = p['PathAndName'] as string;
+                                        if (path.startsWith('.\\')) {
+                                            path = path.replace('.\\', '');
+                                        }
+                                        return resolve(prjWorkspace.path, path);
+                                    }));
+                                }
                             }
+                        } catch (error) {
+                            channel.appendLine(`Error parsing .uvmpw file ${uvwPath}: ${error}`);
                         }
                     });
-                } else {
+                }
+
+                // Search for .uvproj and .uvprojx files
+                if (uvList.length === 0) {
                     uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], 1);
-                    // uvList = workspace.getList([/\.uvproj[x]?$/i], File.emptyFilter);
                 }
 
 
-                // uvList.concat()
-                ResourceManager.getInstance().getProjectFileLocationList().forEach(
-                    str => {
-                        // uvList = uvList.concat(workspace.path2File(str, [/\.uvproj[x]?$/i], File.emptyFilter));
-                        uvList.push(str);
-                    }
-                );
-                // uvList.filter((file) => { return !excludeList.includes(file.name); });
-                uvList.filter((path) => {
-                    const name = path.substring(path.lastIndexOf('.'));
-                    return !excludeList.includes(name);
+                // Add additional project file locations
+                ResourceManager
+                    .getInstance()
+                    .getProjectFileLocationList()
+                    .forEach(path => uvList.push(path));
+
+                // Filter out excluded files
+                uvList = uvList.filter(path => {
+                    const ext = extname(path).toLowerCase();
+                    return !excludeList.includes(ext);
                 });
 
-                // console.log("worckspace", uvList, uvmwList);
-
+                // Load each project file
                 for (const uvPath of uvList) {
                     try {
-                        // console.log('prj uvFile start', uvPath);
-                        // channel.appendLine(uvPath);
                         await this.openProject(uvPath);
                     } catch (error) {
                         channel.appendLine(`Error: open project ${error}`);
