@@ -305,6 +305,7 @@
     "views": {
       "explorer": [
         {
+          "icon":"res/icons/icon.png",
           "id": "project",
           "name": "%keil-assistant.contributes.views.explorer.name%"
         }

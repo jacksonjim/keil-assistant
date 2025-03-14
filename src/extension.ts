@@ -365,11 +365,12 @@ class KeilProject implements IView, KeilProjectInfo {
         try {
             const parser = new XMLParser(options);
             const xmldoc = this.uvprjFile.read();
-            doc = parser.parse(xmldoc, options);    
+            doc = parser.parse(xmldoc, options);
         } catch (e) {
-            console.error(e);
+            const errorMsg = e instanceof Error ? e.message : String(e);
             channel.show();
-            channel.appendLine(`Error:${e}`);
+            channel.appendLine(`XML解析失败: ${errorMsg}`);
+            throw new Error(`Project load failed: ${errorMsg}`);
         }
 
         const targets = doc.Project.Targets.Target;
@@ -599,26 +600,10 @@ abstract class Target implements IView {
                     纯C99    → gcc-x64 模式 
                     纯C11    → clang-x64 模式
                     */
-                    intelliSenseMode: '${default}',// gcc-arm-embedded gcc-x64 gcc-arm clang-x64 clang-arm
+                    intelliSenseMode: '${default}',
                     compilerPath: undefined,
-                    /*  
-                    C89 Mode        → 对应uC89
-                    C99 Mode        → 对应uC99
-                    C11 Mode        → 对应uC11
-                    C17 Mode        → 对应uC17
-                    GNU extensions  → 对应uGnu
-                 
-                     */
-                    cStandard: undefined,
-                    /*  
-                    C++98 Mode      → 对应uCpp98
-                    C++03 Mode      → 对应uCpp03
-                    C++11 Mode      → 对应uCpp11
-                    C++14 Mode      → 对应uCpp14
-                    C++17 Mode      → 对应uCpp17
-                    C++20 Mode      → 对应uCpp20
-                     */
-                    cppStandard: undefined,
+                    cStandard: 'c99',
+                    cppStandard: 'c++03',
                     includePath: undefined,
                     defines: undefined
                 }
@@ -627,7 +612,7 @@ abstract class Target implements IView {
         };
     }
 
-    private updateCppProperties() {
+    private updateCppProperties(cStandard: string, cppStandard: string, intelliSenseMode: string, compilerPath?: string, compilerArgs?: string[]) {
 
         const proFile = new File(this.project.vscodeDir.path + File.sep + 'c_cpp_properties.json');
         let obj: any;
@@ -645,16 +630,24 @@ abstract class Target implements IView {
 
         const configList: any[] = obj['configurations'];
         const index = configList.findIndex((conf) => { return conf.name === this.cppConfigName; });
-
         if (index === -1) {
             configList.push({
                 name: `${this.cppConfigName}`,
-                includePath: Array.from(this.includes).concat(['${default}', '${workspaceFolder}/**']),
-                defines: Array.from(this.defines),
-                intelliSenseMode: '${default}'
+                cStandard: cStandard,
+                cppStandard: cppStandard,
+                compilerPath: compilerPath,
+                compilerArgs: compilerArgs,
+                intelliSenseMode: intelliSenseMode,
+                includePath: Array.from(this.includes),
+                defines: Array.from(this.defines)
             });
         } else {
-            configList[index]['includePath'] = Array.from(this.includes).concat(['${default}', '${workspaceFolder}/**']);
+            configList[index]['compilerPath'] = compilerPath;
+            configList[index]['compilerArgs'] = compilerArgs;
+            configList[index]['cStandard'] = cStandard;
+            configList[index]['cppStandard'] = cppStandard;
+            configList[index]['intelliSenseMode'] = intelliSenseMode;
+            configList[index]['includePath'] = Array.from(this.includes);
             configList[index]['defines'] = Array.from(this.defines);
         }
 
@@ -673,8 +666,13 @@ abstract class Target implements IView {
         const sysIncludes = this.getSystemIncludes(this.targetDOM);
         const rteIncludes = this.getRTEIncludes(this.targetDOM, this.rteDom);
 
+        const cStandard = this.getCStandard(this.targetDOM);
+        const cppStandard = this.getCppStandard(this.targetDOM);
+        const intelliSenseMode = this.getIntelliSenseMode(this.targetDOM);
+
         // set includes
         this.includes.clear();
+        this.includes.add('${workspaceFolder}/**');
 
         let incList: string[] = [];
         if (sysIncludes) {
@@ -737,62 +735,51 @@ abstract class Target implements IView {
         }
 
         for (const group of groups) {
-            if (group['Files'] !== undefined) {
-
-                let isGroupExcluded = false;
-                let fileList: any[];
-                // console.log('GroupOption',group['GroupOption']);
-                const gOption = group['GroupOption'];
-                if (gOption !== undefined) { // check group is excluded
-                    const gComProps = gOption['CommonProperty'];
-                    if (gComProps !== undefined) {
-                        isGroupExcluded = (gComProps['IncludeInBuild'] === 0);
-                    }
-                }
-
-                const nGrp = new FileGroup(this.prjID, group['GroupName'], isGroupExcluded);
-
-                if (Array.isArray(group['Files'])) {
-                    fileList = [];
-                    for (const files of group['Files']) {
-                        if (Array.isArray(files['File'])) {
-                            fileList = fileList.concat(files['File']);
-                        }
-                        else if (files['File'] !== undefined) {
-                            fileList.push(files['File']);
-                        }
-                    }
-                } else {
-                    if (Array.isArray(group['Files']['File'])) {
-                        fileList = group['Files']['File'];
-                    }
-                    else if (group['Files']['File'] !== undefined) {
-                        fileList = [group['Files']['File']];
-                    } else {
-                        fileList = [];
-                    }
-                }
-
-                for (const file of fileList) {
-                    const f = new File(this.project.toAbsolutePath(file['FilePath']));
-
-                    let isFileExcluded = isGroupExcluded;
-                    if (isFileExcluded === false && file['FileOption']) { // check file is enable
-                        const fOption = file['FileOption']['CommonProperty'];
-                        if (fOption && fOption['IncludeInBuild'] === 0) {
-                            isFileExcluded = true;
-                        }
-                    }
-
-                    const nFile = new Source(this.prjID, f, !isFileExcluded);
-                    nGrp.sources.push(nFile);
-                }
-
-                this.fGroups.push(nGrp);
+            if (!group['Files']) {
+                continue;
             }
-        }
 
-        this.updateCppProperties();
+            let isGroupExcluded = false;
+            const gOption = group['GroupOption'];
+            if (gOption) { // check group is excluded
+                const gComProps = gOption['CommonProperty'];
+                if (gComProps) {
+                    isGroupExcluded = (gComProps['IncludeInBuild'] === 0);
+                }
+            }
+
+            const nGrp = new FileGroup(this.prjID, group['GroupName'], isGroupExcluded);
+            const fileList: any[] = Array.isArray(group['Files'])
+                ? group['Files'].flatMap(files => files['File'] || [])
+                : (group['Files']['File'] ? [group['Files']['File']] : []);
+
+            for (const file of fileList) {
+                const filePath = file['FilePath'];
+                if (!filePath?.trim()) {
+                    this.project.logger.log(`[Warn] 发现无效文件路径，Group: ${group['GroupName']}`);
+                    continue;
+                }
+                const f = new File(this.project.toAbsolutePath(file['FilePath']));
+
+                let isFileExcluded = isGroupExcluded;
+                if (isFileExcluded === false && file['FileOption']) { // check file is enable
+                    const fOption = file['FileOption']['CommonProperty'];
+                    if (fOption && fOption['IncludeInBuild'] === 0) {
+                        isFileExcluded = true;
+                    }
+                }
+
+                const nFile = new Source(this.prjID, f, !isFileExcluded);
+                nGrp.sources.push(nFile);
+            }
+
+            this.fGroups.push(nGrp);
+
+        }
+        const toolName = this.getToolName(this.targetDOM);
+        const compilerPath = ResourceManager.getInstance().getCompilerPath(this.getKeilPlatform(), toolName);
+        const compilerArgs = toolName === 'ARMCC' || toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
+        this.updateCppProperties(cStandard, cppStandard, intelliSenseMode, compilerPath, compilerArgs);
 
         this.updateSourceRefs();
     }
@@ -969,11 +956,18 @@ abstract class Target implements IView {
     protected abstract getProblemMatcher(): string[];
 
     protected abstract getKeilPlatform(): string;
+    protected abstract getToolName(target: any): string;
+
+    protected abstract getCStandard(target: any): string;
+    protected abstract getCppStandard(target: any): string;
+    protected abstract getIntelliSenseMode(target: any): string;
+
 }
 
 //===============================================
 
 class C51Target extends Target {
+
 
     protected checkProject(target: any): Error | undefined {
         if (target['TargetOption']['Target51'] === undefined ||
@@ -982,7 +976,9 @@ class C51Target extends Target {
         }
 
     }
-
+    protected getToolName(_target: any): string {
+        throw "C51";
+    }
     protected getKeilPlatform(): string {
         return "C51";
     }
@@ -1071,6 +1067,16 @@ class C51Target extends Target {
     protected getProblemMatcher(): string[] {
         return ['$c51'];
     }
+
+    protected getCStandard(target: any): string {
+        return 'c89';
+    }
+    protected getCppStandard(target: any): string {
+        return 'c++03';
+    }
+    protected getIntelliSenseMode(target: any): string {
+        return 'gcc-x86';
+    }
 }
 
 class C251Target extends Target {
@@ -1081,6 +1087,10 @@ class C251Target extends Target {
             return new Error(`This uVision project is not a C251 project, but have a 'uvproj' suffix !`);
         }
 
+    }
+
+    protected getToolName(target: any): string {
+        return 'C251';
     }
 
     protected getKeilPlatform(): string {
@@ -1157,13 +1167,13 @@ class C251Target extends Target {
     }
 
     protected getIncString(target: any): string {
-        const target51 = target['TargetOption']['Target251']['C251'];
-        return target51['VariousControls']['IncludePath'];
+        const c251 = target['TargetOption']['Target251']['C251'];
+        return c251['VariousControls']['IncludePath'];
     }
 
     protected getDefineString(target: any): string {
-        const target51 = target['TargetOption']['Target251']['C251'];
-        return target51['VariousControls']['Define'];
+        const c251 = target['TargetOption']['Target251']['C251'];
+        return c251['VariousControls']['Define'];
     }
 
     protected getGroups(target: any): any[] {
@@ -1172,6 +1182,15 @@ class C251Target extends Target {
 
     protected getProblemMatcher(): string[] {
         return ['$c251'];
+    }
+    protected getCStandard(_target: any): string {
+        return 'c89';
+    }
+    protected getCppStandard(_target: any): string {
+        return 'c++03';
+    }
+    protected getIntelliSenseMode(_target: any): string {
+        return 'gcc-x86';
     }
 }
 
@@ -1334,6 +1353,10 @@ class ArmTarget extends Target {
 
     protected checkProject(): Error | undefined {
         return undefined;
+    }
+
+    protected getToolName(target: any): string {
+        return target['uAC6'] === 1 ? 'ARMCLANG' : 'ARMCC';
     }
 
     protected getKeilPlatform(): string {
@@ -1882,6 +1905,83 @@ class ArmTarget extends Target {
         return ['$armcc', '$gcc'];
     }
 
+    protected getCStandard(target: any): string {
+        /**
+         * 0：default  → C 语言标准
+         * 1：C90      → 对应uC90
+         * 2：gun90    → 对应uGun99
+         * 3：C99      → 对应uC99
+         * 4：gun99    → 对应uGun99
+         * 5：C11      → 对应uC11
+         * 6：gun11    → 对应uGun11
+         */
+
+        const dat = target['TargetOption']['TargetArmAds']['Cads'];
+        const uC99 = dat['uC99'];
+        const uGun = dat['uGnu'];
+        const v6Lang = dat['v6Lang'];
+        switch (v6Lang) {
+            case 1:
+                return 'c90';
+            case 2:
+                return 'gun90';
+            case 3:
+                return uC99 === 1 ? 'c99' : 'c11';
+            case 4:
+                return uGun === 1 ? 'gun99' : 'gun11';
+            case 5:
+                return 'c11';
+            case 6:
+                return 'gun11';
+            default:
+                return 'c99';
+        }
+    }
+    protected getCppStandard(target: any): string {
+        /**
+         * 0: default  → C++语言标准
+         * 1: C++98    → 对应uC++98
+         * 2: gun++98  → 对应uGun++98
+         * 3: C++11    → 对应uC++11
+         * 4: gun++11  → 对应uGun++11
+         * 5: C++03    → 对应uC++03
+         * 6: C++14    → 对应uC++14
+         * 7: gun++14  → 对应uGun++14
+         * 8: C++17    → 对应uC++17
+         * 9: gun++17  → 对应uGun++17
+         */
+        const dat = target['TargetOption']['TargetArmAds']['Cads'];
+        const v6Langp = dat['v6Langp'];
+        switch (v6Langp) {
+            case 1:
+                return 'c++98';
+            case 2:
+                return 'gun++98';
+            case 3:
+                return 'c++11';
+            case 4:
+                return 'gun++11';
+            case 5:
+                return 'c++03';
+            case 6:
+                return 'c++14';
+            case 7:
+                return 'gun++14';
+            case 8:
+                return 'c++17';
+            case 9:
+                return 'gun++17';
+            default:
+                return 'c++11';
+        }
+    }
+    protected getIntelliSenseMode(target: any): string {
+        if (target['uAC6'] === 1) { // ARMClang
+            return 'clang-arm';
+        } else { // ARMCC
+            return 'gcc-arm';
+        }
+    }
 }
 
 //================================================

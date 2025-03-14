@@ -56,34 +56,38 @@ export class ResourceManager {
     }
 
     getBuilderExe(): string {
-        return this.dirMap.get('bin')?.path + File.sep + 'Uv4Caller.exe';
+        return this.getFilePath('bin', 'Uv4Caller.exe');
     }
 
     getKeilUV4Path(target: string): string {
         return `${this.getKeilRootDir(target)}${File.sep}UV4${File.sep}UV4.exe`;
     }
 
-    getKeilRootDir(target: string): string {
-        let homePath: string | undefined;
+    getCompilerPath(target: string, compiler: string | undefined): string | undefined {
+        if (compiler === "ARM") {
+            return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCC${File.sep}bin${File.sep}armcc.exe`;
+        }
+        if (compiler === "ARMCLANG") {
+            return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
+        }
 
+        return this.getKeilUV4Path(target);
+    }
+
+    getKeilRootDir(target: string): string {
+        const homePath = this.getHomePath(target);
+        return homePath ? homePath : "C:\\Keil_v5";
+    }
+
+    private getHomePath(target: string): string | undefined {
         const homeObj = this.getAppConfig().get<object>("Keil.HOME");
         if (homeObj) {
             const pathMap = new Map<string, string>(Object.entries(homeObj));
-
-            homePath = pathMap.get(target);
-            if (!homePath) {
-                homePath = pathMap.get("MDK");
-            }
-            if (homePath) {
-                return homePath;
-            }
-
+            return pathMap.get(target) || pathMap.get("MDK");
         }
-
-        return "C:\\Keil_v5";
-
-
+        return undefined;
     }
+
     getPropertyValue<T, K extends keyof T>(obj: T, key: K): T[K] {
         return obj[key];
     }
@@ -92,11 +96,10 @@ export class ResourceManager {
         return this.getAppConfig().get<string[]>('Project.ExcludeList') || [];
     }
 
-    // 附加本地文件
     getProjectFileLocationList(): string[] {
         return this.getAppConfig().get<string[]>('Project.FileLocationList') || [];
     }
-    // 增加自定义头文件路径
+
     getProjectCustomIncludePaths(): string[] {
         return this.getAppConfig().get<string[]>('Project.CustomIncludePaths') || [];
     }
@@ -104,5 +107,9 @@ export class ResourceManager {
     getIconByName(name: string): vscode.Uri {
         const icon = this.iconMap.get(name);
         return vscode.Uri.file(icon!);
+    }
+
+    private getFilePath(dirKey: string, fileName: string): string {
+        return this.dirMap.get(dirKey)?.path + File.sep + fileName;
     }
 }
