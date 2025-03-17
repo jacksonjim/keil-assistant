@@ -143,7 +143,7 @@ export class KeilProject implements IView, KeilProjectInfo {
 
         // init uVsion info
         this.uVsionFileInfo.schemaVersion = doc.Project.SchemaVersion;
-        // console.log(doc, targets);
+
         if (Array.isArray(targets)) {
             for (const target of targets) {
                 this.targetList.push(this.getInstance(target, rteDom));

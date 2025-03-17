@@ -117,7 +117,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
                         await this.openProject(uvPath);
                     } catch (error) {
                         this.channel.appendLine(`Error: open project ${error}`);
-                        window.showErrorMessage(`open project: '${uvPath}' failed !, msg: ${(<Error>error).message}`);
+                        window.showErrorMessage(`open project: '${uvPath}' failed !, msg: ${error}`);
                     }
                 }
             } else {
@@ -196,6 +196,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         }
         const nPrj = new KeilProject(this.channel, new File(path), this.workspacePath);
         if (nPrj) {
+            console.log('nPrj.prjID:', nPrj.prjID, "prjList:", this.prjList);
             if (!this.prjList.has(nPrj.prjID)) {
 
                 await nPrj.load();

@@ -6,16 +6,22 @@ import { ResourceManager } from '../ResourceManager';
 
 export class C51Target extends PTarget {
 
-
     protected checkProject(target: any): Error | undefined {
-        if (target['TargetOption']['Target51'] === undefined ||
-            target['TargetOption']['Target51']['C51'] === undefined) {
+        const targetOption = target['TargetOption'];
+        if (targetOption === undefined) {
             return new Error(`This uVision project is not a C51 project, but have a 'uvproj' suffix !`);
         }
-
+        const Target51 = targetOption['Target51'];
+        if (Target51 === undefined) {
+            return new Error(`This uVision project is not a C51 project, but have a 'uvproj' suffix !`);
+        }
+        const c51 = Target51['C51'];
+        if (c51 === undefined) {
+            return new Error(`This uVision project is not a C51 project, but have a 'uvproj' suffix !`);
+        }
     }
     protected getToolName(_target: any): string {
-        throw "C51";
+        return "C51";
     }
     protected getKeilPlatform(): string {
         return "C51";

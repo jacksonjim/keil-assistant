@@ -2,6 +2,16 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.8]
+
+- Fixed:
+  - #62: Fixed a bug where the extension would fail to update the c_cpp_properties.json file when the project contained multiple targets. This issue was caused by the incorrect handling of the targetInfo array during the update process.
+- Optimized:
+  - Refactored FileWatcher.ts to exclusively use chokidar's watch API for both file and directory monitoring. This change unifies event handling, reduces redundant resource usage, and improves overall stability.
+  - Streamlined the package.json scripts by removing redundant installation calls (e.g., eliminating extra "yarn install" within the build commands) and simplifying build/publish workflows for a cleaner development experience.
+
+---
+
 ## [v1.9.7]
 
 - Optimized:

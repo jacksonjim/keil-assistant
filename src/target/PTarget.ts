@@ -139,7 +139,10 @@ export abstract class PTarget implements IView {
 
         // check target is valid
         const err = this.checkProject(this.targetDOM);
-        if (err) { throw err; }
+        if (err) {
+            console.error(`check project failed, ${err}`);
+            throw err;
+        }
 
         const incListStr: string = this.getIncString(this.targetDOM);
         const defineListStr: string = this.getDefineString(this.targetDOM);
