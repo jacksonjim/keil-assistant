@@ -86,6 +86,8 @@ export abstract class PTarget implements IView {
         };
     }
 
+    private lastCppConfig: string = '';
+
     private updateCppProperties(cStandard: string, cppStandard: string, intelliSenseMode: string, compilerPath?: string, compilerArgs?: string[]) {
 
         const proFile = new File(this.project.vscodeDir.path + File.sep + 'c_cpp_properties.json');
@@ -125,7 +127,12 @@ export abstract class PTarget implements IView {
             configList[index]['defines'] = Array.from(this.defines);
         }
 
-        proFile.write(JSON.stringify(obj, undefined, 4));
+        // proFile.write(JSON.stringify(obj, undefined, 4));
+        const newConfig = JSON.stringify(obj, undefined, 4);
+        if (this.lastCppConfig !== newConfig) {
+            proFile.write(newConfig);
+            this.lastCppConfig = newConfig;
+        }
     }
 
     async load(): Promise<void> {
@@ -359,8 +366,10 @@ export abstract class PTarget implements IView {
         this.runAsyncTask('Download', 'f');
     }
 
+    private refCache = new Map<string, Source[]>();
+
     updateSourceRefs() {
-        const rePath = this.getOutputFolder(this.targetDOM);
+        /* const rePath = this.getOutputFolder(this.targetDOM);
         if (rePath) {
             const outPath = this.project.toAbsolutePath(rePath);
             this.fGroups.forEach((group) => {
@@ -378,7 +387,36 @@ export abstract class PTarget implements IView {
                 });
             });
             this._event.emit('dataChanged');
-        }
+        } */
+        const rePath = this.getOutputFolder(this.targetDOM);
+        if (!rePath) return;
+
+        const outPath = this.project.toAbsolutePath(rePath);
+        this.fGroups.forEach(group => {
+            group.sources.forEach(source => {
+                if (!source.enable) return;
+
+                const cacheKey = `${outPath}|${source.file.noSuffixName}`;
+                const cached = this.refCache.get(cacheKey);
+                if (cached) {
+                    source.children = cached;
+                    return;
+                }
+
+                const refFile = File.fromArray([outPath, `${source.file.noSuffixName}.d`]);
+                if (refFile.isFile()) {
+                    const refContent = refFile.read();
+                    const refFileList = this.parseRefLines(this.targetDOM, refContent.split(/\r\n|\n/))
+                        .map(rePath => this.project.toAbsolutePath(rePath));
+                    const sources = refFileList.map(refFilePath =>
+                        new Source(source.prjID, new File(refFilePath))
+                    );
+                    this.refCache.set(cacheKey, sources);
+                    source.children = sources;
+                }
+            });
+        });
+        this._event.emit('dataChanged');
     }
 
     close() {

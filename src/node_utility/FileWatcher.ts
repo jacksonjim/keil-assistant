@@ -1,12 +1,12 @@
 import { File } from "./File";
-import * as fs from 'fs';
 import * as events from "events";
+import { FSWatcher, watch } from "chokidar";
 
 export class FileWatcher {
 
     readonly file: File;
-    private watcher?: fs.FSWatcher;
-    private selfWatcher?: fs.FSWatcher;
+    private watcher?: FSWatcher;
+    private selfWatcher?: FSWatcher;
     private isDir: boolean;
     private recursive: boolean;
     private _event: events.EventEmitter;
@@ -28,10 +28,11 @@ export class FileWatcher {
     }
 
     watch(): this {
-
+        // 使用 chokidar 监控目录变化
         if (this.isDir && this.selfWatcher === undefined) {
-            this.selfWatcher = fs.watch(this.file.dir, { recursive: false }, (event, fname) => {
-                if (event === 'rename' && fname === this.file.name && this.onRename) {
+            this.selfWatcher = watch(this.file.dir, { ignoreInitial: true, depth: 0 });
+            this.selfWatcher.on('unlink', (removedPath) => {
+                if (removedPath && removedPath.endsWith(this.file.name) && this.onRename) {
                     this.onRename(this.file);
                 }
             });
@@ -40,19 +41,17 @@ export class FileWatcher {
             });
         }
 
+        // 使用 chokidar 监控文件变化
         if (this.watcher === undefined) {
-            this.watcher = fs.watch(this.file.path, { recursive: this.recursive }, (event, filename) => {
-                switch (event) {
-                    case 'rename':
-                        if (this.onRename) {
-                            this.onRename(this.isDir ? File.fromArray([this.file.path, filename!]) : this.file);
-                        }
-                        break;
-                    case 'change':
-                        if (this.onChanged) {
-                            this.onChanged(this.isDir ? File.fromArray([this.file.path, filename!]) : this.file);
-                        }
-                        break;
+            this.watcher = watch(this.file.path, { ignoreInitial: true, persistent: true, depth: this.recursive ? undefined : 0 });
+            this.watcher.on('change', (changedPath) => {
+                if (this.onChanged) {
+                    this.onChanged(this.isDir ? File.fromArray([this.file.path, changedPath]) : this.file);
+                }
+            });
+            this.watcher.on('unlink', (removedPath) => {
+                if (this.onRename) {
+                    this.onRename(this.isDir ? File.fromArray([this.file.path, removedPath]) : this.file);
                 }
             });
             this.watcher.on('error', (err) => {
@@ -63,12 +62,10 @@ export class FileWatcher {
     }
 
     close() {
-
         if (this.selfWatcher) {
             this.selfWatcher.close();
             this.selfWatcher = undefined;
         }
-
         if (this.watcher) {
             this.watcher.close();
             this.watcher = undefined;

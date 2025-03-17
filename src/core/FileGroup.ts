@@ -8,6 +8,7 @@ export class FileGroup implements IView {
     tooltip?: string | undefined;
     contextVal?: string | undefined = 'FileGroup';
     icons?: { light: string; dark: string; };
+    private _disabled: boolean;
 
     //----
     sources: Source[];
@@ -17,11 +18,26 @@ export class FileGroup implements IView {
         this.prjID = pID;
         this.sources = [];
         this.tooltip = gName;
+        this._disabled = disabled;
         const iconName = disabled ? 'FolderExclude_32x' : 'Folder_32x';
         this.icons = { light: iconName, dark: iconName };
     }
 
+    private _cachedChildren?: IView[];
     getChildViews(): IView[] | undefined {
-        return this.sources;
+        // return this.sources;
+        if (!this._cachedChildren) {
+            this._cachedChildren = [...this.sources];
+        }
+        return this._cachedChildren;
+    }
+
+    updateDisabledState(disabled: boolean) {
+        if (this._disabled !== disabled) {
+            this._disabled = disabled;
+            const iconName = disabled ? 'FolderExclude_32x' : 'Folder_32x';
+            this.icons = { light: iconName, dark: iconName };
+            this._cachedChildren = undefined; // 清除缓存
+        }
     }
 }

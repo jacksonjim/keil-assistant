@@ -1,4 +1,3 @@
-import { channel } from "diagnostics_channel";
 import { XMLParser } from "fast-xml-parser";
 import { statSync, readFileSync, readdirSync } from "fs";
 import { dirname, extname, join, normalize, resolve } from "path";
