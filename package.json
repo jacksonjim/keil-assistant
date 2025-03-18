@@ -2,7 +2,7 @@
   "name": "keil-vscode-assistant",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.9.8",
+  "version": "1.9.9",
   "publisher": "jacksonjim",
   "icon": "res/icons/icon.png",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
@@ -111,6 +111,12 @@
             "scope": "resource",
             "markdownDescription": "%keil-assistant.contributes.conf.props.project.customIncludePaths.description%",
             "default": []
+          },
+          "KeilAssistant.Project.FindMaxDepth": {
+            "type": "number",
+            "scope": "resource",
+            "markdownDescription": "%keil-assistant.contributes.conf.props.project.FindMaxDepth.description%",
+            "default": 1
           }
         }
       }

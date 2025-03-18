@@ -18,5 +18,6 @@
     "keil-assistant.contributes.commands.project-download.title": "下載到設備",
     "keil-assistant.contributes.commands.project-copy.title": "複製專案值",
     "keil-assistant.contributes.conf.props.keil.home.markdownDescription": "Keil uVision (MDK/C51/C251) 安裝目錄，請根據實際安裝目錄修改預設值， 如果(MDK/C51/C251)安裝在同一目錄內，可以單獨設置MDK的安裝目錄即可. \r\n 預設值: {\"MDK\":\"C:\\Keil_v5\"}。\r\n\r\n例子:\r\n\r\n\"{\"MDK\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C51\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C251\":\"C:\\Keil_v5\"}\"",
-    "keil-assistant.contributes.viewsWelcome.project.content": "uVision的專案不存在 [瞭解更多信息](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[開啟uVision專案](command:explorer.open)"
+    "keil-assistant.contributes.viewsWelcome.project.content": "uVision的專案不存在 [瞭解更多信息](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[開啟uVision專案](command:explorer.open)",
+    "keil-assistant.contributes.conf.props.project.FindMaxDepth.description": "uVision 項目檔搜索深度"
 }

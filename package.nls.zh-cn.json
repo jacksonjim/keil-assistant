@@ -18,5 +18,6 @@
     "keil-assistant.contributes.commands.project-download.title": "下载到设备",
     "keil-assistant.contributes.commands.project-copy.title": "复制对像",
     "keil-assistant.contributes.conf.props.keil.home.markdownDescription": "Keil uVision (MDK/C51/C251) 安装目录,请根据实际安装目录修改默认值, 如果(MDK/C51/C251)安装在同一目录内，可以单独设置MDK的安装目录即可 \r\n 默认值: {\"MDK\":\"C:\\Keil_v5\"}。\r\n\r\n例子:\r\n\r\n\"{\"MDK\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C51\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C251\":\"C:\\Keil_v5\"}\"",
-    "keil-assistant.contributes.viewsWelcome.project.content": "uVision的项目不存在 [了解更多信息](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[打开uVision项目](command:explorer.open)"
+    "keil-assistant.contributes.viewsWelcome.project.content": "uVision的项目不存在 [了解更多信息](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[打开uVision项目](command:explorer.open)",
+    "keil-assistant.contributes.conf.props.project.FindMaxDepth.description": "uVision 项目文件搜索深度,默认为1层子文件夹"
 }

@@ -2,6 +2,19 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.9]
+
+- Fixed:
+
+  - #63: Fixed an issue where the debug adapter reported "no available debug program" preventing the variables request from being sent. The debugger now correctly initializes and attaches to the target.
+  - #64: Addressed redundant folding ranges requests from VS Code, reducing unnecessary processing and improving UI responsiveness.
+  - #65: Resolved a problem with file URI handling during debug sessions (e.g., URIs with scheme 'file') which previously caused instability in path resolution.
+
+- Optimized:
+  - Various improvements derived from the git diff changes, including enhancing event handling in key modules and refining resource mapping logic to further stabilize file and debug operations.
+
+---
+
 ## [v1.9.8]
 
 - Fixed:

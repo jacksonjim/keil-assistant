@@ -71,7 +71,7 @@ export class ResourceManager {
             return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
         }
 
-        return this.getKeilUV4Path(target);
+        return undefined;
     }
 
     getKeilRootDir(target: string): string {
@@ -111,5 +111,10 @@ export class ResourceManager {
 
     private getFilePath(dirKey: string, fileName: string): string {
         return this.dirMap.get(dirKey)?.path + File.sep + fileName;
+    }
+
+    public getProjectFileFindMaxDepth(): number {
+        const depth = this.getAppConfig().get<number>("Project.FindMaxDepth");
+        return depth ? depth : 1;
     }
 }

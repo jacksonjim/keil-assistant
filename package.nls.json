@@ -23,5 +23,6 @@
             "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
         ]
     },
-    "keil-assistant.contributes.viewsWelcome.project.content": "keil project not found [learn more](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[Open project](command:explorer.open)"
+    "keil-assistant.contributes.viewsWelcome.project.content": "keil project not found [learn more](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[Open project](command:explorer.open)",
+    "keil-assistant.contributes.conf.props.project.FindMaxDepth.description": "uVision project file search depth"
 }

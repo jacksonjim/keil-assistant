@@ -95,7 +95,8 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
 
                 // Search for .uvproj and .uvprojx files
                 if (uvList.length === 0) {
-                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], 1);
+                    const depth = ResourceManager.getInstance().getProjectFileFindMaxDepth();
+                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], depth);
                 }
 
 
@@ -196,7 +197,6 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         }
         const nPrj = new KeilProject(this.channel, new File(path), this.workspacePath);
         if (nPrj) {
-            console.log('nPrj.prjID:', nPrj.prjID, "prjList:", this.prjList);
             if (!this.prjList.has(nPrj.prjID)) {
 
                 await nPrj.load();

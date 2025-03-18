@@ -118,9 +118,9 @@ export class C251Target extends PTarget {
         return 'c89';
     }
     protected getCppStandard(_target: any): string {
-        return 'c++03';
+        return 'c++17';
     }
     protected getIntelliSenseMode(_target: any): string {
-        return 'gcc-x86';
+        return '${default}';//'gcc-x86';
     }
 }
