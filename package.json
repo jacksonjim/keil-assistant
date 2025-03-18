@@ -51,9 +51,9 @@
   "scripts": {
     "setup": "yarn install",
     "build:tsc": "tsc --build tsconfig.json",
-    "build": "webpack --mode production && yarn lint",
+    "build:pro": "webpack --mode production && yarn lint",
     "compile": "webpack --mode production",
-    "build:dev": "webpack --mode development",
+    "build": "webpack --mode development",
     "compile-watch": "webpack --mode production -watch --progress",
     "compile-dev-watch": "webpack --mode development -watch --progress",
     "compile-unit-test": "tsc --build test.tsconfig.json",

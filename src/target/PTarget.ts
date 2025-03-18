@@ -158,28 +158,33 @@ export abstract class PTarget implements IView {
         this.includes.clear();
         this.includes.add('${workspaceFolder}/**');
 
-        let incList: string[] = [];
         if (sysIncludes) {
-            incList = incList.concat(sysIncludes);
+            sysIncludes.forEach((incPath) => {
+                incPath = incPath.trim();
+                if (incPath !== '')
+                    this.includes.add(incPath);
+            });
         }
         if (rteIncludes) {
-            incList = incList.concat(rteIncludes);
+            rteIncludes.forEach((incPath) => {
+                incPath = incPath.trim();
+                if (incPath !== '')
+                    this.includes.add(incPath);
+            });
         }
-        incList = incList.concat(incListStr.split(';'));
 
-        incList.forEach((incPath) => {
-            const realPath = incPath.trim();
-            if (realPath !== '') {
-                const normalizedPath = realPath.replace(/\//g, File.sep);
-                let result = normalizedPath;
-                if (/^[a-z]:/i.test(result)) {
-                    result = normalize(result);
-                } else {
-                    result = normalize(result);
-                }
-                this.includes.add(result);
+        const prjIncList = incListStr.split(';');
+        const workspaceDir = `${this.project.workspaceDir}${File.sep}`;
+
+        prjIncList.forEach((incPath) => {
+            incPath = incPath.trim();
+            if (incPath !== '') {
+                incPath = normalize(this.project.uvprjFile.dir + File.sep + incPath);
+                incPath = incPath.replace(workspaceDir, '');
+                this.includes.add(incPath);
             }
-        });
+        })
+
 
         ResourceManager.getInstance().getProjectFileLocationList().forEach(
             filePath => {
@@ -372,25 +377,6 @@ export abstract class PTarget implements IView {
     private refCache = new Map<string, Source[]>();
 
     updateSourceRefs() {
-        /* const rePath = this.getOutputFolder(this.targetDOM);
-        if (rePath) {
-            const outPath = this.project.toAbsolutePath(rePath);
-            this.fGroups.forEach((group) => {
-                group.sources.forEach((source) => {
-                    if (source.enable) { // if source not disabled
-                        const refFile = File.fromArray([outPath, source.file.noSuffixName + '.d']);
-                        if (refFile.isFile()) {
-                            const refFileList = this.parseRefLines(this.targetDOM, refFile.read().split(/\r\n|\n/))
-                                .map((rePath) => { return this.project.toAbsolutePath(rePath); });
-                            source.children = refFileList.map((refFilePath) => {
-                                return new Source(source.prjID, new File(refFilePath));
-                            });
-                        }
-                    }
-                });
-            });
-            this._event.emit('dataChanged');
-        } */
         const rePath = this.getOutputFolder(this.targetDOM);
         if (!rePath) return;
 
