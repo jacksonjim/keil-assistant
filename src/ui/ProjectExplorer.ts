@@ -41,15 +41,15 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
                 dirname(workspace.workspaceFile.fsPath) : workspace.workspaceFolders[0].uri.fsPath;
 
             const prjWorkspace = new File(this.workspacePath);
-            // channel.show();
+            const searchDepth = ResourceManager.getInstance().getProjectFileFindMaxDepth();
             if (prjWorkspace.isDir()) {
                 this.channel.show();
-                this.channel.appendLine('search uvprj[x] project file; >>>>>');
+                this.channel.appendLine('search uvprj[x] project file >>>>> ');
                 const excludeList = ResourceManager.getInstance().getProjectExcludeList();
                 let uvList: string[] = [];
 
                 // Multiply project workspace
-                const uvmwList = await this.findProject(prjWorkspace.path, [/\.uvmpw$/i], 1);
+                const uvmwList = await this.findProject(prjWorkspace.path, [/\.uvmpw$/i], searchDepth);
                 if (uvmwList && uvmwList.length !== 0) {
                     const options = {
                         attributeNamePrefix: "@_",
@@ -95,8 +95,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
 
                 // Search for .uvproj and .uvprojx files
                 if (uvList.length === 0) {
-                    const depth = ResourceManager.getInstance().getProjectFileFindMaxDepth();
-                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], depth);
+                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], searchDepth);
                 }
 
 
@@ -129,51 +128,27 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
 
     async findProject(dir: string, fileFilter?: RegExp[], deep: number = 0): Promise<string[]> {
         const list: string[] = [];
-        readdirSync(dir).filter((val) => {
-            const path = join(dir, val);
-            const stat = statSync(path);
-
-            if (stat.isDirectory()) {
-                return val;
+        const items = readdirSync(dir);
+        for (const item of items) {
+            if (item === '.' || item === '..') {
+                continue;
             }
-            if (fileFilter) {
-                const name = val.substring(val.lastIndexOf('.'));
-                let hasFile = false;
-                for (const reg of fileFilter) {
-                    if (reg.test(name)) {
-                        hasFile = true;
-                        break;
-                    }
-                }
-                if (hasFile) {
-                    return val;
-                }
-            }
-
-        }).forEach(async fp => {
-            if (fp !== '.' && fp !== '..') {
-                const path = join(dir, fp);
-                const stat = statSync(path);
-                if (stat.isFile()) {
-                    const name = path.substring(path.lastIndexOf('.'));
-                    if (fileFilter) {
-                        for (const reg of fileFilter) {
-                            if (reg.test(name)) {
-                                list.push(path);
-                                break;
-                            }
-                        }
-                    } else {
-                        list.push(path);
+            const fullPath = join(dir, item);
+            const stat = statSync(fullPath);
+            if (stat.isFile()) {
+                if (fileFilter) {
+                    const extension = extname(item); // 优化：直接使用 extname 获取扩展名
+                    if (fileFilter.some(reg => reg.test(extension))) {
+                        list.push(fullPath);
                     }
                 } else {
-                    if (deep > 0) {
-                        list.push(...await this.findProject(path, fileFilter, 0));
-                    }
+                    list.push(fullPath);
                 }
-
+            } else if (stat.isDirectory() && deep > 0) {
+                const subFiles = await this.findProject(fullPath, fileFilter, deep - 1);
+                list.push(...subFiles);
             }
-        });
+        }
         return list;
     }
 
