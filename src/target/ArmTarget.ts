@@ -702,6 +702,7 @@ export class ArmTarget extends PTarget {
     }
 
     protected getCStandard(target: any): string {
+        if (target['uAC6'] != 1) return 'c17'
         /**
          * 0：default  → C 语言标准
          * 1：C90      → 对应uC90
@@ -734,6 +735,7 @@ export class ArmTarget extends PTarget {
         }
     }
     protected getCppStandard(target: any): string {
+        if (target['uAC6'] != 1) return 'c++17'
         /**
          * 0: default  → C++语言标准
          * 1: C++98    → 对应uC++98
