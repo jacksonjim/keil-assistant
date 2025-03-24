@@ -9,6 +9,7 @@ All notable changes to the "keil-assistant" extension will be documented in this
   - #63: Fixed an issue where the debug adapter reported "no available debug program" preventing the variables request from being sent. The debugger now correctly initializes and attaches to the target.
   - #64: Addressed redundant folding ranges requests from VS Code, reducing unnecessary processing and improving UI responsiveness.
   - #65: Resolved a problem with file URI handling during debug sessions (e.g., URIs with scheme 'file') which previously caused instability in path resolution.
+  - #67: Fixed an issue where the extension failed to recognize certain project types, leading to errors in parsing and updating project configurations.
 
 - Optimized:
   - Various improvements derived from the git diff changes, including enhancing event handling in key modules and refining resource mapping logic to further stabilize file and debug operations.
