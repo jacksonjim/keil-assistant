@@ -270,7 +270,8 @@ export abstract class PTarget implements IView {
         }
         const toolName = this.getToolName(this.targetDOM);
         const compilerPath = ResourceManager.getInstance().getCompilerPath(this.getKeilPlatform(), toolName);
-        const compilerArgs = toolName === 'ARMCC' || toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
+
+        const compilerArgs =  toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] :undefined;
         this.updateCppProperties(cStandard, cppStandard, intelliSenseMode, compilerPath, compilerArgs);
 
         this.updateSourceRefs();

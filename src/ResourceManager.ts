@@ -64,13 +64,9 @@ export class ResourceManager {
     }
 
     getCompilerPath(target: string, compiler: string | undefined): string | undefined {
-        if (compiler === "ARMCC") {
-            return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCC${File.sep}bin${File.sep}armcc.exe`;
-        }
         if (compiler === "ARMCLANG") {
             return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
         }
-
         return undefined;
     }
 
