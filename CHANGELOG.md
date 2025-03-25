@@ -2,6 +2,27 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.10]
+
+- Fixed:
+
+  - #66: **Keil project include path parsing issue**  
+    Resolved an issue where the extension failed to correctly parse certain Keil project configurations, leading to incomplete include paths and build errors.
+  - #67: **Unrecognized project types causing configuration errors**  
+    Fixed a problem where the extension did not recognize specific project types, resulting in errors during parsing and updating project configurations.
+
+- Optimized:
+
+  - Improved the performance of the `findProject` method by reducing redundant file system operations and optimizing recursive directory traversal.
+  - Enhanced error handling in `openProject` to provide clearer and more actionable error messages.
+  - Streamlined `package.json` scripts by removing unused dependencies and improving build efficiency.
+
+- Feature:
+  - Added support for additional Keil project types, improving compatibility with a wider range of embedded projects.
+  - Introduced better logging for debugging workspace and project-related issues, making it easier to identify and resolve problems.
+
+---
+
 ## [v1.9.9]
 
 - Fixed:
