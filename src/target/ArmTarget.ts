@@ -777,7 +777,7 @@ export class ArmTarget extends PTarget {
         if (target['uAC6'] === 1) { // ARMClang
             return 'clang-arm';
         } else { // ARMCC
-            return 'gcc-arm';
+            return '${default}';
         }
     }
 }

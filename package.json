@@ -2,7 +2,7 @@
   "name": "keil-vscode-assistant",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.9.9",
+  "version": "1.9.10",
   "publisher": "jacksonjim",
   "icon": "res/icons/icon.png",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
@@ -51,7 +51,7 @@
   "scripts": {
     "setup": "yarn install",
     "build:tsc": "tsc --build tsconfig.json",
-    "build:pro": "webpack --mode production && yarn lint",
+    "build:prod": "webpack --mode production && yarn lint",
     "compile": "webpack --mode production",
     "build": "webpack --mode development",
     "compile-watch": "webpack --mode production -watch --progress",
@@ -336,10 +336,19 @@
         "path": "./syntaxes/build-log.tmLanguage"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "project",
+          "title": "%keil-assistant.contributes.views.explorer.name%",
+          "icon": "res/icons/icon.svg"
+        }
+      ]
+    },       
     "views": {
       "explorer": [
         {
-          "icon": "res/icons/icon.png",
+          "icon": "res/icons/icon.svg",
           "id": "project",
           "name": "%keil-assistant.contributes.views.explorer.name%"
         }
