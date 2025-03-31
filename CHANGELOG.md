@@ -2,6 +2,24 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.11]
+
+- Fixed:
+
+  - #69: **FileWatcher event handling bug**  
+    Resolved an issue where file changes were not detected correctly in certain scenarios, ensuring consistent and reliable event handling.
+
+- Optimized:
+
+  - Improved the performance of the `loadWorkspace` method by optimizing file system operations and reducing redundant logic.
+  - Enhanced error handling in `FileWatcher` to provide clearer error messages and prevent unexpected crashes.
+  - Updated `package.json` dependencies to remove unused packages and ensure compatibility with the latest VS Code APIs.
+
+- Feature:
+  - Introduced enhanced logging for debugging project-related issues, making it easier to identify and resolve problems.
+
+---
+
 ## [v1.9.10]
 
 - Fixed:

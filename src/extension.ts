@@ -53,7 +53,7 @@ export function activate(context: ExtensionContext) {
 
                 // load project
                 const uvPrjPath = uri[0].fsPath;
-                await prjExplorer.openProject(uvPrjPath);
+                await prjExplorer.openProject(uvPrjPath, false);
                 // switch workspace
                 const msg = l10n.t('keil project load done ! switch workspace ?');
                 const result = await window.showInformationMessage(msg, l10n.t('Ok'), l10n.t('Later'));

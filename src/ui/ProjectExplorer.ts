@@ -34,94 +34,89 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         context.subscriptions.push(window.registerTreeDataProvider('project', this));
         context.subscriptions.push(commands.registerCommand(this.itemClickCommand, (item: IView) => this.onItemClick(item)));
     }
-
-    async loadWorkspace() {
-        if (workspace.workspaceFolders && workspace.workspaceFolders.length > 0) {
-            this.workspacePath = workspace.workspaceFile && /^file:/.test(workspace.workspaceFile.toString()) ?
-                dirname(workspace.workspaceFile.fsPath) : workspace.workspaceFolders[0].uri.fsPath;
-
-            const prjWorkspace = new File(this.workspacePath);
-            const searchDepth = ResourceManager.getInstance().getProjectFileFindMaxDepth();
-            if (prjWorkspace.isDir()) {
-                this.channel.show();
-                this.channel.appendLine('search uvprj[x] project file >>>>> ');
-                const excludeList = ResourceManager.getInstance().getProjectExcludeList();
-                let uvList: string[] = [];
-
-                // Multiply project workspace
-                const uvmwList = await this.findProject(prjWorkspace.path, [/\.uvmpw$/i], searchDepth);
-                if (uvmwList && uvmwList.length !== 0) {
-                    const options = {
-                        attributeNamePrefix: "@_",
-                        attrNodeName: "attr", //default is 'false'
-                        textNodeName: "#text",
-                        ignoreAttributes: false,
-                        ignoreNameSpace: false,
-                        allowBooleanAttributes: false,
-                        parseNodeValue: true,
-                        parseAttributeValue: false,
-                        trimValues: true,
-                        cdataTagName: "__cdata", //default is 'false'
-                        cdataPositionChar: "\\c",
-                        parseTrueNumberOnly: false,
-                        arrayMode: false, //"strict"
-                        // attrValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
-                        // tagValueProcessor: (val: any, tagName: any) => decode(val), //default is a=>a
-                        stopNodes: ["parse-me-as-string"]
-                    };
-                    const xmlParser = new XMLParser(options);
-                    uvmwList.forEach(uvwPath => {
-                        try {
-                            const stat = statSync(uvwPath);
-                            if (stat.isFile()) {
-                                const uvmpwXml = readFileSync(uvwPath);
-                                const uvmpw = xmlParser.parse(uvmpwXml);
-                                const projectList = uvmpw['ProjectWorkspace']['project'];
-                                if (Array.isArray(projectList)) {
-                                    uvList = uvList.concat(projectList.map<string>(p => {
-                                        let path = p['PathAndName'] as string;
-                                        if (path.startsWith('.\\')) {
-                                            path = path.replace('.\\', '');
-                                        }
-                                        return resolve(prjWorkspace.path, path);
-                                    }));
-                                }
-                            }
-                        } catch (error) {
-                            this.channel.appendLine(`Error parsing .uvmpw file ${uvwPath}: ${error}`);
-                        }
-                    });
-                }
-
-                // Search for .uvproj and .uvprojx files
-                if (uvList.length === 0) {
-                    uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], searchDepth);
-                }
-
-
-                // Add additional project file locations
-                ResourceManager
-                    .getInstance()
-                    .getProjectFileLocationList()
-                    .forEach(path => uvList.push(path));
-
-                // Filter out excluded files
-                uvList = uvList.filter(path => {
-                    const ext = extname(path).toLowerCase();
-                    return !excludeList.includes(ext);
+    private parseUvmpwFile(uvwPath: string, xmlParser: XMLParser): string[] {
+        try {
+            const uvmpwXml = readFileSync(uvwPath);
+            const uvmpw = xmlParser.parse(uvmpwXml);
+            const projectList = uvmpw['ProjectWorkspace']['project'];
+            if (Array.isArray(projectList)) {
+                return projectList.map<string>(p => {
+                    const path = p['PathAndName'] as string;
+                    return resolve(dirname(uvwPath), path);
                 });
+            }
+        } catch (error) {
+            this.channel.appendLine(`Error parsing .uvmpw file ${uvwPath}: ${error}`);
+        }
+        return [];
+    }
+    async loadWorkspace() {
+        this.channel.show();
+        if (!workspace.workspaceFolders || workspace.workspaceFolders.length === 0) {
+            this.channel.appendLine('No workspace folders found.');
+            return;
+        }
 
-                // Load each project file
-                for (const uvPath of uvList) {
-                    try {
-                        await this.openProject(uvPath);
-                    } catch (error) {
-                        this.channel.appendLine(`Error: open project ${error}`);
-                        window.showErrorMessage(`open project: '${uvPath}' failed !, msg: ${error}`);
-                    }
-                }
-            } else {
-                this.channel.appendLine(`Error: this assistant working in folder}`);
+        this.workspacePath = workspace.workspaceFile && /^file:/.test(workspace.workspaceFile.toString())
+            ? dirname(workspace.workspaceFile.fsPath)
+            : workspace.workspaceFolders[0].uri.fsPath;
+
+        const prjWorkspace = new File(this.workspacePath);
+        const searchDepth = ResourceManager.getInstance().getProjectFileFindMaxDepth();
+
+        if (!prjWorkspace.isDir()) {
+            this.channel.appendLine('Error: this assistant works only in a folder.');
+            return;
+        }
+
+        this.channel.appendLine('search uvprj[x] project file >>>>> ');
+        const excludeList = ResourceManager.getInstance().getProjectExcludeList();
+        let uvList: string[] = [];
+
+        // Multiply project workspace
+        const uvmwList = await this.findProject(prjWorkspace.path, [/\.uvmpw$/i], searchDepth);
+        if (uvmwList && uvmwList.length > 0) {
+            const options = {
+                attributeNamePrefix: "@_",
+                attrNodeName: "attr", //default is 'false'
+                textNodeName: "#text",
+                ignoreAttributes: false,
+                ignoreNameSpace: false,
+                allowBooleanAttributes: false,
+                parseNodeValue: true,
+                parseAttributeValue: false,
+                trimValues: true,
+                cdataTagName: "__cdata", //default is 'false'
+                cdataPositionChar: "\\c",
+                parseTrueNumberOnly: false,
+                arrayMode: false, //"strict"
+                // attrValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
+                // tagValueProcessor: (val: any, tagName: any) => decode(val), //default is a=>a
+                stopNodes: ["parse-me-as-string"]
+            };
+            const xmlParser = new XMLParser(options);
+            uvList = uvmwList.flatMap(uvwPath => this.parseUvmpwFile(uvwPath, xmlParser));
+        }
+
+        // Search for .uvproj and .uvprojx files if no .uvmpw files are found
+        if (uvList.length === 0) {
+            uvList = await this.findProject(prjWorkspace.path, [/\.uvproj[x]?$/i], searchDepth);
+        }
+
+        // Add additional project file locations
+        uvList.push(...ResourceManager.getInstance().getProjectFileLocationList());
+
+        // Filter out excluded files
+        uvList = uvList.filter(path => !excludeList.includes(extname(path).toLowerCase()));
+
+        const  hasMultiplyProject = uvList.length > 1; //Multiply
+        // Load each project file
+        for (const uvPath of uvList) {
+            try {
+                await this.openProject(uvPath, hasMultiplyProject);
+            } catch (error) {
+                this.channel.appendLine(`Error: open project ${error}`);
+                window.showErrorMessage(`Failed to open project: '${uvPath}', Error: ${error}`);
             }
         }
     }
@@ -152,7 +147,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         return list;
     }
 
-    async openProject(path: string): Promise<KeilProject | undefined> {
+    async openProject(path: string, hasMultiplyProject: boolean): Promise<KeilProject | undefined> {
         if (this.workspacePath === undefined) {
             const msg = l10n.t('The workspace directory is empty, Goto open the workspace directory?');
             const result = await window.showInformationMessage(msg, l10n.t('Ok'), l10n.t('Cancel'));
@@ -170,7 +165,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
                 throw Error(errorMsg);
             }
         }
-        const nPrj = new KeilProject(this.channel, new File(path), this.workspacePath);
+        const nPrj = new KeilProject(this.channel, new File(path), this.workspacePath, hasMultiplyProject);
         if (nPrj) {
             if (!this.prjList.has(nPrj.prjID)) {
 

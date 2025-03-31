@@ -12,6 +12,8 @@ export interface KeilProjectInfo {
 
     logger: Console;
 
+    isMultiplyProject: boolean;
+
     toAbsolutePath(rePath: string): string;
 }
 

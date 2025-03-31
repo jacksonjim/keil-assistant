@@ -36,6 +36,7 @@ export class KeilProject implements IView, KeilProjectInfo {
     vscodeDir: File;
     uvprjFile: File;
     logger: Console;
+    isMultiplyProject: boolean;
 
     // uVison info
     uVsionFileInfo: UVisonInfo;
@@ -51,7 +52,7 @@ export class KeilProject implements IView, KeilProjectInfo {
         project: undefined,
     };
 
-    constructor(private channel: OutputChannel, _uvprjFile: File, workspace: string | undefined) {
+    constructor(private channel: OutputChannel, _uvprjFile: File, workspace: string | undefined, hasMultiplyProject: boolean) {
         this._event = new EventsEmitter();
         this.uVsionFileInfo = <UVisonInfo>{};
         this.targetList = [];
@@ -62,6 +63,7 @@ export class KeilProject implements IView, KeilProjectInfo {
         this.logger = new console.Console(createWriteStream(logPath, { flags: 'a+' }));
         this.uvprjFile = _uvprjFile;
         this.watcher = new FileWatcher(this.uvprjFile);
+        this.isMultiplyProject = hasMultiplyProject;
         this.prjID = this.getMD5(_uvprjFile.path);
         this.label = _uvprjFile.noSuffixName;
         this.tooltip = _uvprjFile.path;

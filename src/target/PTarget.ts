@@ -56,13 +56,30 @@ export abstract class PTarget implements IView {
         this.targetName = `${targetDOM['TargetName']}`;
         this.label = this.targetName;
         this.tooltip = this.targetName;
-        this.cppConfigName = this.targetName;
+        this.cppConfigName = this.getCppConfigName(prjInfo, this.targetName);
         this.includes = new Set();
         this.defines = new Set();
         this.fGroups = [];
         this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + this.targetName + '_uv4.log');
     }
 
+    private getCppConfigName(project:KeilProjectInfo, target:string): string {
+        if(project.isMultiplyProject) {
+            return `${target} for ${project.uvprjFile.noSuffixName}`;
+        }
+        return target;
+    }
+
+    private hashCode(str: string): number {
+        let hash = 0;
+        if (str.length === 0) return hash;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char; // 等价于 hash * 31 + char
+            hash |= 0; // 将结果转换为 32 位整数
+        }
+        return hash;
+    }
 
     on(event: 'dataChanged', listener: () => void): void;
     on(event: any, listener: () => void): void {
