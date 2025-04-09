@@ -2,6 +2,15 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.12]
+
+- Fixed:
+
+  - #70: **Project file recognition issue**  
+    Resolved an issue where certain project files were not correctly identified, ensuring proper handling and recognition of all supported project types.
+
+---
+
 ## [v1.9.11]
 
 - Fixed:
