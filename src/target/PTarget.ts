@@ -63,8 +63,8 @@ export abstract class PTarget implements IView {
         this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + this.targetName + '_uv4.log');
     }
 
-    private getCppConfigName(project:KeilProjectInfo, target:string): string {
-        if(project.isMultiplyProject) {
+    private getCppConfigName(project: KeilProjectInfo, target: string): string {
+        if (project.isMultiplyProject) {
             return `${target} for ${project.uvprjFile.noSuffixName}`;
         }
         return target;
@@ -241,8 +241,9 @@ export abstract class PTarget implements IView {
         }
 
         for (const group of groups) {
+            const groupName = String(group['GroupName']);
             if (!group['Files']) {
-                this.project.logger.log(`[Warn] 发现无效的文件组，Group: ${group['GroupName']}`);
+                this.project.logger.log(`[Warn] 发现无效的文件组，Group: ${groupName}`);
                 continue;
             }
 
@@ -254,8 +255,7 @@ export abstract class PTarget implements IView {
                     isGroupExcluded = (gComProps['IncludeInBuild'] === 0);
                 }
             }
-
-            const nGrp = new FileGroup(this.prjID, group['GroupName'], isGroupExcluded);
+            const nGrp = new FileGroup(this.prjID, groupName, isGroupExcluded);
 
             // 处理文件列表（使用解构+管道操作优化）
             const fileList = [group['Files']]
@@ -271,7 +271,7 @@ export abstract class PTarget implements IView {
                 }))
                 .filter(({ FilePath }) => {
                     const isValid = FilePath?.trim();
-                    !isValid && this.project.logger.log(`[Warn] 发现无效文件路径，Group: ${group['GroupName']}`);
+                    !isValid && this.project.logger.log(`[Warn] 发现无效文件路径，Group: ${groupName}`);
                     return isValid;
                 });
 
@@ -285,6 +285,7 @@ export abstract class PTarget implements IView {
             this.fGroups.push(nGrp);
 
         }
+
         const toolName = this.getToolName(this.targetDOM);
         const compilerPath = ResourceManager.getInstance().getCompilerPath(this.getKeilPlatform(), toolName);
 

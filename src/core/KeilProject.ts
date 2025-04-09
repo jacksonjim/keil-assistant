@@ -5,7 +5,7 @@ import { File } from '../node_utility/File';
 import { createHash } from 'crypto';
 import { createWriteStream } from 'fs';
 import { Time } from '../node_utility/Time';
-import { XMLParser } from 'fast-xml-parser';
+import { XMLParser, X2jOptions, validationOptions } from 'fast-xml-parser';
 import { normalize } from 'path';
 import { KeilProjectInfo } from './KeilProjectInfo';
 
@@ -109,30 +109,34 @@ export class KeilProject implements IView, KeilProjectInfo {
     }
 
     async load() {
-        var doc: any = {};
-        let options = {
+        let doc: any = {};
+        const options: X2jOptions = {
             attributeNamePrefix: "@_",
-            attrNodeName: "attr", //default is 'false'
             textNodeName: "#text",
             ignoreAttributes: false,
-            ignoreNameSpace: false,
+            ignoreDeclaration: true,
+            ignorePiTags: true,
             allowBooleanAttributes: false,
-            parseNodeValue: true,
-            parseAttributeValue: false,
+            parseAttributeValue: true,
+            parseTagValue: true,
             trimValues: true,
-            cdataTagName: "__cdata", //default is 'false'
-            cdataPositionChar: "\\c",
-            parseTrueNumberOnly: false,
-            arrayMode: false, //"strict"
-            // attrValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
+            cdataPropName: "__cdata",
+            // attributeValueProcessor: (val: any, attrName: any) => decode(val, { isAttributeValue: true }),//default is a=>a
             // tagValueProcessor: (val: any, tagName: any) => decode(val), //default is a=>a
-            stopNodes: ["parse-me-as-string"]
+            // stopNodes: [],
+            numberParseOptions: {
+                leadingZeros: true,
+                hex: true,
+                skipLike: /^[A-Za-z]+[0-9]*$/,
+                eNotation: true
+            }
         };
-        // channel.show();
+
         try {
             const parser = new XMLParser(options);
             const xmldoc = this.uvprjFile.read();
-            doc = parser.parse(xmldoc, options);
+            doc = parser.parse(xmldoc);
+            console.log(doc);
         } catch (e) {
             const errorMsg = e instanceof Error ? e.message : String(e);
             this.channel.show();

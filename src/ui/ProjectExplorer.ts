@@ -294,7 +294,6 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
     }
 
     getTreeItem(element: IView): TreeItem {
-
         const res = new TreeItem(element.label);
 
         res.contextValue = element.contextVal;
