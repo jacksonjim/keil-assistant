@@ -498,189 +498,96 @@ export class ArmTarget extends PTarget {
         }
         return undefined;
     }
+    private processArray(item: any): any[] {
+        if (Array.isArray(item)) {
+            return item;
+        }
+        return item ? [item] : [];
+    }
 
     protected getRTEIncludes(_target: any, rteDom: any): string[] | undefined {
-        if (!rteDom)
-            return undefined;
-        //
-        const componentList = rteDom['components']['component'];
-        let components: Array<any> = [];
-        const rteFiles = rteDom['files']['file'];
-        let rtefileList: Array<any> = [];
-        const apiList = rteDom['apis']['api'];
-        let targetInfos = undefined;
-        if (apiList !== undefined)
-            targetInfos = apiList['targetInfos']['targetInfo'];
-        let incList: string[] = [];
-        const incMap: Map<string, string> = new Map();
+        if (!rteDom) return undefined;
+        // 使用解构赋值和数组处理优化
+        const { components, apis, files } = rteDom;
+        // 强化数组标准化处理逻辑
+
+
+        const componentsList = this.processArray(components?.component);
+        const apiList = this.processArray(apis?.api);
+        const rteFiles = this.processArray(files?.file);
+
+        const incSet = new Set<string>();
         const keilRootDir = ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform());
+        const packsDir = `${keilRootDir}${File.sep}ARM${File.sep}Packs`;
 
-        const packsDir = `${keilRootDir}${File.sep}ARM${File.sep}Packs`;;
-
-        const options = {
+        // 修正缓存实现
+        const pdscCache = new Map<string, any>();
+        const parserOptions = {
             attributeNamePrefix: "@_",
-            attrNodeName: "attr", //default is 'false'
-            textNodeName: "#text",
             ignoreAttributes: false,
-            ignoreNameSpace: false,
-            allowBooleanAttributes: false,
             parseNodeValue: true,
-            parseAttributeValue: false,
             trimValues: true,
-            cdataTagName: "__cdata", //default is 'false'
-            cdataPositionChar: "\\c",
-            parseTrueNumberOnly: false,
-            arrayMode: false, //"strict"
-            attrValueProcessor: (val: any, _attrName: any) => heDecode(val, { isAttributeValue: true }),//default is a=>a
-            tagValueProcessor: (val: any, _tagName: any) => heDecode(val), //default is a=>a
-            stopNodes: ["parse-me-as-string"]
+            attributeValueProcessor: (val: string) => heDecode(val, { isAttributeValue: true })
         };
-        const parser = new XMLParser(options);
-        const cache = new Map<string, any>();
-        let pdscDom: any | undefined;
-        if (Array.isArray(componentList)) {
-            components = components.concat(componentList);
-        } else {
-            if (componentList !== undefined) {
-                components.push(componentList);
-            }
-        }
 
-        for (const component of components) {
-            const cClass = component['@_Cclass'];
-            const cBundle = component['@_Cbundle'];
-            const cGroup = component['@_Cgroup'];
-            const cSub = component['@_Csub'];
-            const cVendor = component['@_Cvendor'];
-            const cVersion = component['@_Cversion'];
-            const cCondition = component['@_condition'];
-            const cPackage = component['package'];
-            const pkgName = cPackage['@_name'];
+        // 统一路径处理方法
+        const addValidPath = (path: string) => {
+            const resolvedPath = resolve(path);
+            if (existsSync(resolvedPath)) {
+                incSet.add(resolvedPath);
+            }
+        };
+
+        // 处理组件包含路径
+        for (const component of componentsList) {
+            const cPackage = component.package;
             const pkgVendor = cPackage['@_vendor'];
+            const pkgName = cPackage['@_name'];
             const pkgVersion = cPackage['@_version'];
             const cRootDir = join(packsDir, pkgVendor, pkgName, pkgVersion);
-            const pdscPath = join(cRootDir, `${cVendor}.${pkgName}.pdsc`);
+            const pdscPath = join(cRootDir, `${component['@_Cvendor']}.${pkgName}.pdsc`);
 
-            if (cache.has(pdscPath)) {
-                pdscDom = cache.get(pdscPath);
-            } else {
-                if (!existsSync(pdscPath))
-                    continue;
-                const pdscSta = statSync(pdscPath);
-                if (pdscSta.isFile()) {
-                    const pdscdoc = readFileSync(pdscPath, { encoding: 'utf-8' });
-                    pdscDom = parser.parse(pdscdoc);
-                    cache.set(pdscPath, pdscDom);
-                } else {
-                    continue;
+            // 带缓存的PDSC解析
+            if (!pdscCache.has(pdscPath)) {
+                if (existsSync(pdscPath) && statSync(pdscPath).isFile()) {
+                    const pdscContent = readFileSync(pdscPath, 'utf-8');
+                    pdscCache.set(pdscPath, new XMLParser(parserOptions).parse(pdscContent));
                 }
             }
 
-            if (pdscDom) {
-                let pdscComponents;
-                let pdscBundle = undefined;
-                if (cBundle !== undefined) {
-                    pdscComponents = pdscDom['package']['components']['bundle']['component'];
-                    pdscBundle = pdscDom['package']['components']['bundle']['@_Cbundle']
-                } else {
-                    pdscComponents = pdscDom['package']['components']['component'];
-                }
-
-                if (Array.isArray(pdscComponents)) {
-                    let hasInc = false;
-                    for (const pdscComponent of pdscComponents) {
-                        const pdscClass = pdscComponent['@_Cclass'];
-                        const pdscGroup = pdscComponent['@_Cgroup'];
-                        const pdscCondition = pdscComponent['@_condition'];
-                        const pdscVersion = pdscComponent['@_Cversion'];
-                        const pdscSub = pdscComponent['@_Csub'];
-                        const pdscfileList = pdscComponent['files']['file'];
-                        let subEq = true;
-                        if (pdscSub !== undefined && cSub !== undefined) {
-                            subEq = pdscSub === cSub;
-                        } else {
-                            subEq = true;
-                        }
-
-                        if ((pdscClass === cClass || pdscBundle == cBundle) &&
-                            pdscGroup === cGroup
-                            && pdscVersion === cVersion
-                            && pdscCondition === cCondition
-                            && subEq
-                            && Array.isArray(pdscfileList)) {
-                            for (const file of pdscfileList) {
-                                const category = file['@_category'];
-                                const attr = file['@_attr'];
-                                if (attr === 'config')
-                                    continue;
-                                if (category === 'include') {
-                                    const name = file['@_name'];
-                                    const incPath = resolve(join(cRootDir, name));
-                                    if (existsSync(incPath)) {
-                                        incMap.set(incPath, name);
-                                        hasInc = true;
-                                    }
-                                    break;
-                                }
-
-                                // delete
-                                /* if (category === 'header') {
-                                    const name = file['@_name'] as string;
-                                    const pos = name.lastIndexOf("/");
-                                    const inc = name.substring(0, pos);
-                                    if (!incMap.has(inc)) {
-                                        incMap.set(File.toLocalPath(`${cRootDir}${File.sep}${inc}`), inc);
-                                    }
-                                    hasInc = true;
-                                    break;
-                                } */
-                            }
-
-                        }
-                        if (hasInc) {
-                            break;
+            const pdscDom = pdscCache.get(pdscPath);
+            if (pdscDom?.package?.components) {
+                // 组件路径处理逻辑
+                const components = this.processArray(pdscDom.package.components.component);
+                for (const comp of components) {
+                    const files = this.processArray(comp.files?.file);
+                    for (const file of files) {
+                        if (file['@_category'] === 'include') {
+                            addValidPath(join(cRootDir, file['@_name']));
                         }
                     }
                 }
             }
         }
 
-
-        const prjPath = this.project.uvprjFile.dir;
-        const wkd = this.project.workspaceDir;
-        const prjRoot = prjPath.replace(wkd!, ".");
-        if (Array.isArray(rteFiles)) {
-            rtefileList = rtefileList.concat(rteFiles);
-            for (const rtefile of rtefileList) {
-                const fAttr = rtefile['@_attr'];
-                const fCategory = rtefile['@_category'];
-                const instance = rtefile['instance'];
-                if (fAttr === 'config' && fCategory === 'header') {
-                    const incStr = instance['#text'];
-                    const incPath = resolve(join(prjRoot, incStr));
-                    if (existsSync(incPath))
-                        incMap.set(incPath, incStr);
-                }
+        // 处理项目文件路径
+        const prjRoot = resolve(this.project.uvprjFile.dir);
+        for (const file of rteFiles) {
+            if (file['@_attr'] === 'config' && file['@_category'] === 'header') {
+                addValidPath(join(prjRoot, file.instance['#text']));
             }
         }
-        if (Array.isArray(targetInfos)) {
-            for (const targetInfo of targetInfos) {
-                const inc = targetInfo['@_name'];
-                const incPath = join(prjRoot, "RTE", `_${inc}`);
-                if (inc === this.targetName) {
-                    incMap.set(incPath, inc);
+
+        // 处理API路径
+        for (const api of apiList) {
+            for (const targetInfo of this.processArray(api.targetInfos?.targetInfo)) {
+                if (targetInfo['@_name'] === this.targetName) {
+                    addValidPath(join(prjRoot, "RTE", `_${this.targetName}`));
                 }
             }
         }
 
-        cache.clear();
-        incMap.forEach((_, key) => {
-            incList.push(key);
-        });
-        incMap.clear();
-        // console.log("incList", incList);
-        return incList;
-
+        return Array.from(incSet);
     }
 
     protected getIncString(target: any): string {

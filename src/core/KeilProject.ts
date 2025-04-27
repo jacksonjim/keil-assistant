@@ -136,7 +136,6 @@ export class KeilProject implements IView, KeilProjectInfo {
             const parser = new XMLParser(options);
             const xmldoc = this.uvprjFile.read();
             doc = parser.parse(xmldoc);
-            console.log(doc);
         } catch (e) {
             const errorMsg = e instanceof Error ? e.message : String(e);
             this.channel.show();

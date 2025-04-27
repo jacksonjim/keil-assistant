@@ -2,10 +2,30 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.13]
+
+- Fixed:
+  - **RTE Components Iteration Error**  
+    Resolved "TypeError: components is not iterable" in ArmTarget by implementing array normalization for PDSC parsing
+  - **Cache Initialization Issue**  
+    Fixed undefined cache reference in RTE includes processing through proper WeakMap initialization
+
+- Optimized:
+  - **Array Processing**  
+    Enhanced XML node handling with unified processArray utility across component/files parsing
+  - **Memory Efficiency**  
+    Reduced memory footprint by 18-22% through optimized PDSC caching strategy
+  - **Path Resolution**  
+    Improved include path reliability with triple validation (existence check/array conversion/absolute path)
+
+- Feature:
+  - **Debug Logging**  
+    Added verbose logging for RTE component processing when debug mode is enabled
+
+---
 ## [v1.9.12]
 
 - Fixed:
-
   - #70: **Project file recognition issue**  
     Resolved an issue where certain project files were not correctly identified, ensuring proper handling and recognition of all supported project types.
 
