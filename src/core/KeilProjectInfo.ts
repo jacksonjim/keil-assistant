@@ -1,6 +1,7 @@
 import { File } from '../node_utility/File';
 
 export interface KeilProjectInfo {
+    keilVscodeProps: any;
 
     prjID: string;
 

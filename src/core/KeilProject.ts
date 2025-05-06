@@ -169,6 +169,7 @@ export class KeilProject implements IView, KeilProjectInfo {
             this.activeTargetName = this.keilVscodeProps['project']['activeTargetName'];
         }
 
+        this.updateClangdFile();
     }
 
     getInstance(targetDOM: any, rteDom: any): PTarget {
@@ -228,8 +229,13 @@ export class KeilProject implements IView, KeilProjectInfo {
         if (tName !== this.activeTargetName) {
             this.activeTargetName = tName;
             this.updateKeilVscodeProperties();
+            this.updateClangdFile();
             this.notifyUpdateView(); // notify data changed
         }
+    }
+    
+    updateClangdFile() {
+        this.getActiveTarget()?.updateClangdFile();
     }
 
     getActiveTarget(): PTarget | undefined {
