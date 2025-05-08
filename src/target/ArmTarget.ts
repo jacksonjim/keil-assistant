@@ -517,17 +517,13 @@ export class ArmTarget extends PTarget {
         const rteFiles = this.processArray(files?.file);
 
         const incSet = new Set<string>();
-        const keilRootDir = ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform());
-        const packsDir = `${keilRootDir}${File.sep}ARM${File.sep}Packs`;
+        const packsDir = ResourceManager.getInstance().getPackDir(this.getKeilPlatform());
 
         // 修正缓存实现
         const pdscCache = new Map<string, any>();
         const parserOptions = {
             attributeNamePrefix: "@_",
             ignoreAttributes: false,
-            parseNodeValue: true,
-            trimValues: true,
-            attributeValueProcessor: (val: string) => heDecode(val, { isAttributeValue: true })
         };
 
         // 统一路径处理方法
@@ -560,10 +556,14 @@ export class ArmTarget extends PTarget {
                 // 组件路径处理逻辑
                 const components = this.processArray(pdscDom.package.components.component);
                 for (const comp of components) {
-                    const files = this.processArray(comp.files?.file);
-                    for (const file of files) {
-                        if (file['@_category'] === 'include') {
-                            addValidPath(join(cRootDir, file['@_name']));
+                    if (comp['@_Cgroup'] == component['@_Cgroup'] && comp['@_condition'] == component['@_condition']) {
+                        const files = this.processArray(comp.files?.file);
+                        for (const file of files) {
+                            if (file['@_category'] === 'include') {
+                                addValidPath(join(cRootDir, file['@_name']));
+                            } else if (file['@_category'] === 'header') {
+                                addValidPath(join(cRootDir, file['@_name'], ".."));
+                            }
                         }
                     }
                 }

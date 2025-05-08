@@ -76,6 +76,8 @@
     "@eslint/js": "^9.25.1",
     "@types/chokidar": "^2.1.7",
     "@types/he": "^1.2.3",
+    "@types/ini": "^4.1.1",
+    "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.10",
     "@types/node": "^18.x",
     "@types/vscode": "^1.73.0",
@@ -344,7 +346,7 @@
           "icon": "res/icons/icon.svg"
         }
       ]
-    },       
+    },
     "views": {
       "explorer": [
         {

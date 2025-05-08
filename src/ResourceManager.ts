@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import { File } from './node_utility/File';
+import * as ini from 'ini';
 
 let _instance: ResourceManager | undefined;
 
@@ -67,12 +68,30 @@ export class ResourceManager {
         if (compiler === "ARMCLANG") {
             return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
         }
+        if (compiler === "ARMCC") {
+            return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCC${File.sep}bin${File.sep}armcc.exe`;
+        }
         return undefined;
     }
 
     getKeilRootDir(target: string): string {
         const homePath = this.getHomePath(target);
         return homePath ? homePath : "C:\\Keil_v5";
+    }
+
+    getPackDir(target: string): string {
+        var path : string | undefined = undefined;
+        const homePath = this.getKeilRootDir(target);
+        try {
+            const iniFile = new File(homePath + File.sep + 'TOOLS.INI');
+            const iniContent = iniFile.read();
+            const parsed = ini.parse(iniContent);
+            path = parsed['UV2']['RTEPATH'].replace(/^["']+|["']+$/g, '');
+        } catch (e) {
+            console.error("Error reading TOOL.INI file:", e);
+        }
+
+        return path || homePath + File.sep + 'ARM' + File.sep + 'PACK';
     }
 
     private getHomePath(target: string): string | undefined {

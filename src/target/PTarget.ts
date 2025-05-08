@@ -10,6 +10,7 @@ import { Source } from "../core/Source";
 import { closeSync, openSync, readSync, statSync, watchFile, writeFileSync } from "fs";
 import { spawn } from "child_process";
 import { decode } from "iconv-lite";
+import * as yaml from 'js-yaml';
 
 export interface UVisonInfo {
     schemaVersion: string | undefined;
@@ -45,6 +46,7 @@ export abstract class PTarget implements IView {
     // private uv4LogLockFileWatcher: FileWatcher;
     private isTaskRunning: boolean = false;
     private taskChannel: OutputChannel | undefined;
+    private clangdContext: string | undefined;
 
     constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
         this._event = new EventsEmitter();
@@ -144,11 +146,31 @@ export abstract class PTarget implements IView {
             configList[index]['defines'] = Array.from(this.defines);
         }
 
-        // proFile.write(JSON.stringify(obj, undefined, 4));
         const newConfig = JSON.stringify(obj, undefined, 4);
         if (this.lastCppConfig !== newConfig) {
             proFile.write(newConfig);
             this.lastCppConfig = newConfig;
+        }
+
+        const clangdConfig = {
+            CompileFlags: {
+                Add: [...Array.from(this.includes).map((inc) => `-I${inc.replace(/\${workspaceFolder}/g, this.project.workspaceDir || ".")}`), ...Array.from(this.defines).map((def) => `-D${def}`), ...(compilerArgs || [])],
+                Compiler: compilerPath,
+            }
+        };
+
+        this.clangdContext = yaml.dump(clangdConfig, {
+            noRefs: true,
+            lineWidth: -1 // 防止折行
+        });
+    }
+
+    updateClangdFile() {
+        const clangdFile = new File(this.project.workspaceDir + File.sep + '.clangd');
+        if (this.clangdContext) {
+            clangdFile.write(this.clangdContext);
+        } else {
+            this.project.logger.log(`[Error] .clangd file is empty`);
         }
     }
 
@@ -174,6 +196,7 @@ export abstract class PTarget implements IView {
         // set includes
         this.includes.clear();
         this.includes.add('${workspaceFolder}/**');
+        this.includes.add("${workspaceFolder}/RTE/" + `_${this.targetName.replace(" ", "_")}`);
 
         if (sysIncludes) {
             sysIncludes.forEach((incPath) => {
