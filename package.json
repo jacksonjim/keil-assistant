@@ -75,7 +75,6 @@
   "devDependencies": {
     "@eslint/js": "^9.26.0",
     "@types/chokidar": "^2.1.7",
-    "@types/he": "^1.2.3",
     "@types/ini": "^4.1.1",
     "@types/js-yaml": "^4.0.9",
     "@types/mocha": "^10.0.10",

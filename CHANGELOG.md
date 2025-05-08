@@ -2,6 +2,17 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.14]
+
+- Updated:
+  - Upgraded dependencies: `@eslint/js`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`, `eslint`, and `fast-xml-parser` to their latest versions for improved performance and compatibility.
+
+- Optimized:
+  - Enhanced `.clangd` file generation logic to ensure better configuration and usability.
+
+- Removed:
+  - Eliminated unnecessary imports to streamline the codebase and reduce redundancy.
+
 ## [v1.9.13]
 
 - Fixed:

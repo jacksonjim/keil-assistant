@@ -208,8 +208,10 @@ export abstract class PTarget implements IView {
 
         // set includes
         this.includes.clear();
-        this.includes.add('${workspaceFolder}/**');
-        this.includes.add("${workspaceFolder}/RTE/" + `_${this.targetName.replace(" ", "_")}`);
+        //this.includes.add('${workspaceFolder}/**');
+
+        if (rteIncludes !== undefined)
+            this.includes.add("${workspaceFolder}/RTE/" + `_${this.targetName.replace(" ", "_")}`);
 
         if (sysIncludes) {
             sysIncludes.forEach((incPath) => {
