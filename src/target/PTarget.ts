@@ -151,10 +151,23 @@ export abstract class PTarget implements IView {
             proFile.write(newConfig);
             this.lastCppConfig = newConfig;
         }
+        // 提前获取工作区目录，避免多次访问属性
+        const workspaceDir = this.project.workspaceDir || ".";
+        // 提前将 Set 转换为数组，避免多次调用 Array.from
+        const includeArray = Array.from(this.includes);
+        const defineArray = Array.from(this.defines);
 
+        // 生成 .clangd 文件内容    
         const clangdConfig = {
             CompileFlags: {
-                Add: [...Array.from(this.includes).map((inc) => `-I${inc.replace(/\${workspaceFolder}/g, this.project.workspaceDir || ".")}`), ...Array.from(this.defines).map((def) => `-D${def}`), ...(compilerArgs || [])],
+                Add: [
+                    // 使用 map 生成包含路径参数
+                    ...includeArray.map((inc) => `-I${inc.replace(/\${workspaceFolder}/g, workspaceDir)}`),
+                    // 使用 map 生成宏定义参数
+                    ...defineArray.map((def) => `-D${def}`),
+                    // 展开编译器参数，如果不存在则为空数组
+                    ...(compilerArgs || [])
+                ],
                 Compiler: compilerPath,
             }
         };

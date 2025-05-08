@@ -7,7 +7,6 @@ import { execSync } from 'child_process';
 import { XMLParser } from 'fast-xml-parser';
 import { existsSync, statSync, readFileSync } from 'fs';
 import { resolve, join } from 'path';
-import { decode as heDecode } from 'he';
 import { PTarget, UVisonInfo } from './PTarget';
 
 export class ArmTarget extends PTarget {

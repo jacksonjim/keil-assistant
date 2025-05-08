@@ -5,7 +5,7 @@ import { File } from '../node_utility/File';
 import { createHash } from 'crypto';
 import { createWriteStream } from 'fs';
 import { Time } from '../node_utility/Time';
-import { XMLParser, X2jOptions, validationOptions } from 'fast-xml-parser';
+import { XMLParser, X2jOptions } from 'fast-xml-parser';
 import { normalize } from 'path';
 import { KeilProjectInfo } from './KeilProjectInfo';
 
