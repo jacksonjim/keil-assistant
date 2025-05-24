@@ -612,30 +612,30 @@ export class ArmTarget extends PTarget {
         /**
          * 0：default  → C 语言标准
          * 1：C90      → 对应uC90
-         * 2：gun90    → 对应uGun99
+         * 2：gnu90    → 对应uGnu99
          * 3：C99      → 对应uC99
-         * 4：gun99    → 对应uGun99
+         * 4：gnu99    → 对应uGnu99
          * 5：C11      → 对应uC11
-         * 6：gun11    → 对应uGun11
+         * 6：gnu11    → 对应uGnu11
          */
 
         const dat = target['TargetOption']['TargetArmAds']['Cads'];
         const uC99 = dat['uC99'];
-        const uGun = dat['uGnu'];
+        const uGnu = dat['uGnu'];
         const v6Lang = dat['v6Lang'];
         switch (v6Lang) {
             case 1:
                 return 'c90';
             case 2:
-                return 'gun90';
+                return 'gnu90';
             case 3:
                 return uC99 === 1 ? 'c99' : 'c11';
             case 4:
-                return uGun === 1 ? 'gun99' : 'gun11';
+                return uGnu === 1 ? 'gnu99' : 'gnu11';
             case 5:
                 return 'c11';
             case 6:
-                return 'gun11';
+                return 'gnu11';
             default:
                 return 'c99';
         }
@@ -645,14 +645,14 @@ export class ArmTarget extends PTarget {
         /**
          * 0: default  → C++语言标准
          * 1: C++98    → 对应uC++98
-         * 2: gun++98  → 对应uGun++98
+         * 2: gnu++98  → 对应uGnu++98
          * 3: C++11    → 对应uC++11
-         * 4: gun++11  → 对应uGun++11
+         * 4: gnu++11  → 对应uGnu++11
          * 5: C++03    → 对应uC++03
          * 6: C++14    → 对应uC++14
-         * 7: gun++14  → 对应uGun++14
+         * 7: gnu++14  → 对应uGnu++14
          * 8: C++17    → 对应uC++17
-         * 9: gun++17  → 对应uGun++17
+         * 9: gnu++17  → 对应uGnu++17
          */
         const dat = target['TargetOption']['TargetArmAds']['Cads'];
         const v6Langp = dat['v6Langp'];
@@ -660,21 +660,21 @@ export class ArmTarget extends PTarget {
             case 1:
                 return 'c++98';
             case 2:
-                return 'gun++98';
+                return 'gnu++98';
             case 3:
                 return 'c++11';
             case 4:
-                return 'gun++11';
+                return 'gnu++11';
             case 5:
                 return 'c++03';
             case 6:
                 return 'c++14';
             case 7:
-                return 'gun++14';
+                return 'gnu++14';
             case 8:
                 return 'c++17';
             case 9:
-                return 'gun++17';
+                return 'gnu++17';
             default:
                 return 'c++11';
         }
