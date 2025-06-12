@@ -2,6 +2,11 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.15]
+
+- Fixed:
+  - Modify `gun` to `gnu`.
+
 ## [v1.9.14]
 
 - Updated:
