@@ -25,36 +25,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-          
-       # 安装系统依赖
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          # 根据系统版本选择包名
-          if grep -q "24.04" /etc/os-release; then
-            sudo apt-get install -y xvfb dbus-x11 libgtk-3-0t64 libasound2t64 libnss3 libxss1 libatk-bridge2.0-0
-          else
-            sudo apt-get install -y xvfb dbus-x11 libgtk-3-0 libasound2 libnss3 libxss1 libatk-bridge2.0-0
-          fi
-          
-      # ======== 关键改动：增强测试环境配置 ========
-      - name: Configure test environment
-        run: |
-          # 启动 D-Bus 并设置环境变量
-          sudo service dbus start
-          export DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$(id -u)/bus
-          
-          # 启动 Xvfb 虚拟显示服务器
-          export DISPLAY=:$(shuf -i 100-200 -n 1)
-          Xvfb $DISPLAY -screen 0 1920x1080x24 -ac +extension RANDR -noreset > /dev/null 2>&1 &
-          sleep 3  # 确保 Xvfb 完全初始化
-          
-          # 持久化环境变量
-          echo "DISPLAY=$DISPLAY" >> $GITHUB_ENV
-          echo "DBUS_SESSION_BUS_ADDRESS=$DBUS_SESSION_BUS_ADDRESS" >> $GITHUB_ENV
-          echo "ELECTRON_DISABLE_GPU=1" >> $GITHUB_ENV
-          echo "LIBGL_ALWAYS_SOFTWARE=1" >> $GITHUB_ENV
-          echo "VSCODE_LOG_LEVEL=error" >> $GITHUB_ENV
+      
+      - name: Install Yarn
+        run: npm install -g yarn
+
+      - name: Set env RELEASE_VERSION
+        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+
+      - name: Set env VERSION
+        run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
+
+      # - name: Install vsce
+      #   run: npm install @vscode/vsce --save-dev
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build package
+        run: npx vsce package --no-yarn
           
       - name: Install dependencies
         run: |
@@ -66,37 +54,16 @@ jobs:
             npm install --package-lock-only
             npm ci
           fi
-        env:
-          DISPLAY: ${{ env.DISPLAY }}
-          DBUS_SESSION_BUS_ADDRESS: ${{ env.DBUS_SESSION_BUS_ADDRESS }}
-          ELECTRON_DISABLE_GPU: 1
-          LIBGL_ALWAYS_SOFTWARE: 1
-          VSCODE_LOG_LEVEL: error
 
       # ======== 优化测试执行 ========
       - name: Run tests
-        run: xvfb-run -a --server-args="-screen 0 1920x1080x24" npm test
-        env:
-          # 继承之前设置的环境变量
-          DISPLAY: ${{ env.DISPLAY }}
-          DBUS_SESSION_BUS_ADDRESS: ${{ env.DBUS_SESSION_BUS_ADDRESS }}
-          ELECTRON_DISABLE_GPU: 1
-          LIBGL_ALWAYS_SOFTWARE: 1
-          DEBUG: "electron*" # 可选：需要详细日志时启用
+        run: xvfb-run -a npm test
+        if: runner.os == 'Linux'
+
+      - name: Run tests
+        run: npm test
+        if: runner.os == 'Linux'
           
-      # ======== 后续构建步骤保持不变 ========
-      - name: Set env RELEASE_VERSION
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-
-      - name: Set env VERSION
-        run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-
-      - name: Install vsce
-        run: npm install @vscode/vsce --save-dev
-
-      - name: Build package
-        run: npx vsce package --no-yarn
-        
       - name: Create Release
         uses: softprops/action-gh-release@v1
         if: startsWith(github.ref, 'refs/tags/')
