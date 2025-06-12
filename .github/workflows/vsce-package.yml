@@ -57,7 +57,21 @@ jobs:
           echo "VSCODE_LOG_LEVEL=error" >> $GITHUB_ENV
           
       - name: Install dependencies
-        run: npm ci # 使用 ci 替代 install 确保精确依赖
+        run: |
+          if [ -f package-lock.json ]; then
+            echo "Using package-lock.json for installation"
+            npm ci
+          else
+            echo "Generating package-lock.json..."
+            npm install --package-lock-only
+            npm ci
+          fi
+        env:
+          DISPLAY: ${{ env.DISPLAY }}
+          DBUS_SESSION_BUS_ADDRESS: ${{ env.DBUS_SESSION_BUS_ADDRESS }}
+          ELECTRON_DISABLE_GPU: 1
+          LIBGL_ALWAYS_SOFTWARE: 1
+          VSCODE_LOG_LEVEL: error
 
       # ======== 优化测试执行 ========
       - name: Run tests
