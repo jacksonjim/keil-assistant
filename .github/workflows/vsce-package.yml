@@ -44,7 +44,7 @@ jobs:
       - name: Extract Release Notes from CHANGELOG.md
         run: |
           VERSION=${{ env.VERSION }}
-          awk "/^##? ?v?${VERSION}/ {flag=1; next} /^##? /{flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
+          awk "/^## \\[v?${VERSION}\\]/ {flag=1; next} /^## /{flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
