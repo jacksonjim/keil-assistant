@@ -1,8 +1,9 @@
-import { IView } from "../core/IView";
+import type { IView } from "../core/IView";
 import { EventEmitter as EventsEmitter } from 'events';
 import { File } from "../node_utility/File";
-import { KeilProjectInfo } from "../core/KeilProjectInfo";
-import { commands, l10n, OutputChannel, window } from "vscode";
+import type { KeilProjectInfo } from "../core/KeilProjectInfo";
+import type { OutputChannel} from "vscode";
+import { commands, l10n, window } from "vscode";
 import { FileGroup } from "../core/FileGroup";
 import { normalize, resolve } from 'path';
 import { ResourceManager } from "../ResourceManager";
@@ -12,7 +13,7 @@ import { spawn } from "child_process";
 import { decode } from "iconv-lite";
 import * as yaml from 'js-yaml';
 
-export interface UVisonInfo {
+export type UVisonInfo = {
     schemaVersion: string | undefined;
 }
 
@@ -44,7 +45,7 @@ export abstract class PTarget implements IView {
 
     private uv4LogFile: File;
     // private uv4LogLockFileWatcher: FileWatcher;
-    private isTaskRunning: boolean = false;
+    private isTaskRunning = false;
     private taskChannel: OutputChannel | undefined;
     private clangdContext: string | undefined;
 
@@ -62,13 +63,14 @@ export abstract class PTarget implements IView {
         this.includes = new Set();
         this.defines = new Set();
         this.fGroups = [];
-        this.uv4LogFile = new File(this.project.vscodeDir.path + File.sep + this.targetName + '_uv4.log');
+        this.uv4LogFile = new File(`${this.project.vscodeDir.path + File.sep + this.targetName  }_uv4.log`);
     }
 
     private getCppConfigName(project: KeilProjectInfo, target: string): string {
         if (project.isMultiplyProject) {
             return `${target} for ${project.uvprjFile.noSuffixName}`;
         }
+
         return target;
     }
 
@@ -94,11 +96,11 @@ export abstract class PTarget implements IView {
         };
     }
 
-    private lastCppConfig: string = '';
+    private lastCppConfig = '';
 
     private updateCppProperties(cStandard: string, cppStandard: string, intelliSenseMode: string, compilerPath?: string, compilerArgs?: string[]) {
 
-        const proFile = new File(this.project.vscodeDir.path + File.sep + 'c_cpp_properties.json');
+        const proFile = new File(`${this.project.vscodeDir.path + File.sep  }c_cpp_properties.json`);
         let obj: any;
 
         if (proFile.isFile()) {
@@ -113,15 +115,16 @@ export abstract class PTarget implements IView {
         }
 
         const configList: any[] = obj['configurations'];
-        const index = configList.findIndex((conf) => { return conf.name === this.cppConfigName; });
+        const index = configList.findIndex((conf) => conf.name === this.cppConfigName);
+
         if (index === -1) {
             configList.push({
                 name: `${this.cppConfigName}`,
-                cStandard: cStandard,
-                cppStandard: cppStandard,
-                compilerPath: compilerPath,
-                compilerArgs: compilerArgs,
-                intelliSenseMode: intelliSenseMode,
+                cStandard,
+                cppStandard,
+                compilerPath,
+                compilerArgs,
+                intelliSenseMode,
                 includePath: Array.from(this.includes),
                 defines: Array.from(this.defines)
             });
@@ -136,27 +139,31 @@ export abstract class PTarget implements IView {
         }
 
         const newConfig = JSON.stringify(obj, undefined, 4);
+
         if (this.lastCppConfig !== newConfig) {
             proFile.write(newConfig);
             this.lastCppConfig = newConfig;
         }
         // 提前获取工作区目录，避免多次访问属性
-        const workspaceDir = this.project.workspaceDir || ".";
+        const workspaceDir = this.project.workspaceDir ?? ".";
         // 提前将 Set 转换为数组，避免多次调用 Array.from
         const includeArray = Array.from(this.includes);
         const defineArray = Array.from(this.defines);
 
         // 生成 .clangd 文件内容    
         const clangdConfig = {
+            // eslint-disable-next-line @typescript-eslint/naming-convention
             CompileFlags: {
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 Add: [
                     // 使用 map 生成包含路径参数
                     ...includeArray.map((inc) => `-I${inc.replace(/\${workspaceFolder}/g, workspaceDir)}`),
                     // 使用 map 生成宏定义参数
                     ...defineArray.map((def) => `-D${def}`),
                     // 展开编译器参数，如果不存在则为空数组
-                    ...(compilerArgs || [])
+                    ...(compilerArgs ?? [])
                 ],
+                // eslint-disable-next-line @typescript-eslint/naming-convention
                 Compiler: compilerPath,
             }
         };
@@ -168,7 +175,8 @@ export abstract class PTarget implements IView {
     }
 
     updateClangdFile() {
-        const clangdFile = new File(this.project.workspaceDir + File.sep + '.clangd');
+        const clangdFile = new File(`${this.project.workspaceDir + File.sep  }.clangd`);
+
         if (this.clangdContext) {
             clangdFile.write(this.clangdContext);
         } else {
@@ -180,6 +188,7 @@ export abstract class PTarget implements IView {
 
         // check target is valid
         const err = this.checkProject(this.targetDOM);
+
         if (err) {
             console.error(`check project failed, ${err}`);
             throw err;
@@ -261,6 +270,7 @@ export abstract class PTarget implements IView {
         this.fGroups = [];
 
         let groups: any[];
+
         if (Array.isArray(_groups)) {
             groups = _groups;
         } else {
@@ -269,6 +279,7 @@ export abstract class PTarget implements IView {
 
         for (const group of groups) {
             const groupName = String(group['GroupName']);
+
             if (!group['Files']) {
                 this.project.logger.log(`[Warn] 发现无效的文件组，Group: ${groupName}`);
                 continue;
@@ -276,8 +287,10 @@ export abstract class PTarget implements IView {
 
             let isGroupExcluded = false;
             const gOption = group['GroupOption'];
+
             if (gOption) { // check group is excluded
                 const gComProps = gOption['CommonProperty'];
+
                 if (gComProps) {
                     isGroupExcluded = (gComProps['IncludeInBuild'] === 0);
                 }
@@ -296,16 +309,19 @@ export abstract class PTarget implements IView {
                     ...fItem,
                     absPath: this.project.toAbsolutePath(fItem.FilePath)
                 }))
-                .filter(({ FilePath }) => {
-                    const isValid = FilePath?.trim();
+                .filter(({ FilePath: filePath }) => {
+                    const isValid = filePath?.trim();
+
                     !isValid && this.project.logger.log(`[Warn] 发现无效文件路径，Group: ${groupName}`);
+
                     return isValid;
                 });
 
             // 使用管道操作处理文件列表
-            fileList.forEach(({ FileOption, absPath }) => {
+            fileList.forEach(({ FileOption: fileOption, absPath }) => {
                 const isExcluded = isGroupExcluded ||
-                    FileOption?.CommonProperty?.IncludeInBuild === 0;
+                    fileOption?.CommonProperty?.IncludeInBuild === 0;
+
                 nGrp.sources.push(new Source(this.prjID, new File(absPath), !isExcluded));
             });
 
@@ -317,6 +333,7 @@ export abstract class PTarget implements IView {
         const compilerPath = ResourceManager.getInstance().getCompilerPath(this.getKeilPlatform(), toolName);
 
         const compilerArgs = toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
+
         this.updateCppProperties(cStandard, cppStandard, intelliSenseMode, compilerPath, compilerArgs);
 
         this.updateSourceRefs();
@@ -325,7 +342,9 @@ export abstract class PTarget implements IView {
     private runAsyncTask(name: string, type: 'b' | 'r' | 'f' = 'b') {
         if (this.isTaskRunning) {
             const msg = l10n.t('Task isRuning Please wait it finished try !');
+
             window.showWarningMessage(msg);
+
             return;
         }
         this.isTaskRunning = true;
@@ -345,9 +364,11 @@ export abstract class PTarget implements IView {
         const logWatcher = watchFile(this.uv4LogFile.path, { persistent: true, interval: 1000 }, (curr, prev) => {
             if (curr.mtime > prev.mtime) {
                 const numRead = readSync(fd, buf, 0, 4096, prev.size);
+
                 if (numRead > 0) {
                     curPos += numRead;
                     const txt = this.dealLog(buf.subarray(0, numRead));
+
                     this.taskChannel?.appendLine(txt);
                 }
             }
@@ -366,17 +387,20 @@ export abstract class PTarget implements IView {
             }
         );
 
-        execCommand.on('close', async (_code) => {
+        execCommand.on('close', (_code) => {
             this.isTaskRunning = false;
             // let execSync = require('child_process').execSync;
             // execSync('sleep ' + 5);
             // await this.sleep(20);
             const stats = statSync(this.uv4LogFile.path);
+
             while (curPos < stats.size) {
                 const numRead = readSync(fd, buf, 0, 4096, curPos);
+
                 if (numRead > 0) {
                     curPos += numRead;
                     const txt = this.dealLog(buf.subarray(0, numRead));
+
                     this.taskChannel?.appendLine(txt);
                 }
             }
@@ -391,10 +415,11 @@ export abstract class PTarget implements IView {
 
     dealLog(logTxt: Buffer): string {
         let logStr = decode(logTxt, 'cp936');
-        const srcFileExp: RegExp = /((\.\.\/)?.*\..\(\d+\)):/g;
+        const srcFileExp = /((\.\.\/)?.*\..\(\d+\)):/g;
 
         if (srcFileExp.test(logStr)) {
             const prjRoot = this.project.uvprjFile.dir;
+
             logStr = logStr.replace(srcFileExp, function (_match, str) {
                 return normalize(prjRoot + File.sep + str);
             });
@@ -420,21 +445,26 @@ export abstract class PTarget implements IView {
 
     updateSourceRefs() {
         const rePath = this.getOutputFolder(this.targetDOM);
+
         if (!rePath) return;
 
         const outPath = this.project.toAbsolutePath(rePath);
+
         this.fGroups.forEach(group => {
             group.sources.forEach(source => {
                 if (!source.enable) return;
 
                 const cacheKey = `${outPath}|${source.file.noSuffixName}`;
                 const cached = this.refCache.get(cacheKey);
+
                 if (cached) {
                     source.children = cached;
+
                     return;
                 }
 
                 const refFile = File.fromArray([outPath, `${source.file.noSuffixName}.d`]);
+
                 if (refFile.isFile()) {
                     const refContent = refFile.read();
                     const refFileList = this.parseRefLines(this.targetDOM, refContent.split(/\r\n|\n/))
@@ -442,6 +472,7 @@ export abstract class PTarget implements IView {
                     const sources = refFileList.map(refFilePath =>
                         new Source(source.prjID, new File(refFilePath))
                     );
+
                     this.refCache.set(cacheKey, sources);
                     source.children = sources;
                 }

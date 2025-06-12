@@ -7,20 +7,23 @@ export class C251Target extends PTarget {
 
     protected checkProject(target: any): Error | undefined {
         const targetOption = target['TargetOption'];
+
         if (targetOption === undefined) {
             return new Error(`This uVision project is not a C251 project, but have a 'uvproj' suffix!`); 
         }
         const target251 = targetOption['Target251'];
+
         if (target251 === undefined) {
             return new Error(`This uVision project is not a C251 project, but have a 'uvproj' suffix!`); 
         }
         const c251 = target251['C251'];
+
         if (c251 === undefined) {
             return new Error(`This uVision project is not a C251 project, but have a 'uvproj' suffix!`); 
         }
     }
 
-    protected getToolName(target: any): string {
+    protected getToolName(_target: any): string {
         return 'C251';
     }
 
@@ -69,10 +72,12 @@ export class C251Target extends PTarget {
         if (target) {
             const components = target['components']['component'];
             const apis = target['apis']['api'];
+
             if (Array.isArray(components) || Array.isArray(apis)) {
                 return ["_RTE_"];
             }
         }
+
         return [];
     }
 
@@ -80,16 +85,20 @@ export class C251Target extends PTarget {
         const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform()));
         const vendor = target['TargetOption']['TargetCommonOption']['Vendor'];
         const list = [];
+
         if (keilRootDir.isDir()) {
             const c251Inc = `${keilRootDir.path}${File.sep}C251${File.sep}INC`;
             const vendorInc = `${c251Inc}${File.sep}${vendor}`;
             const vendorDirFile = new File(vendorInc);
+
             list.push(c251Inc);
             if (vendorDirFile.isExist() && vendorDirFile.isDir()) {
                 list.push(vendorInc);
             }
+
             return list;
         }
+
         return undefined;
     }
 
@@ -99,16 +108,18 @@ export class C251Target extends PTarget {
 
     protected getIncString(target: any): string {
         const c251 = target['TargetOption']['Target251']['C251'];
+
         return c251['VariousControls']['IncludePath'];
     }
 
     protected getDefineString(target: any): string {
         const c251 = target['TargetOption']['Target251']['C251'];
+
         return c251['VariousControls']['Define'];
     }
 
     protected getGroups(target: any): any[] {
-        return target['Groups']['Group'] || [];
+        return target['Groups']['Group'] ?? [];
     }
 
     protected getProblemMatcher(): string[] {

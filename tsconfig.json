@@ -14,7 +14,8 @@
     "strictNullChecks": true,
     "strict": true, /* enable all strict type-checking options */
     "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true 
+    "skipLibCheck": true ,
+    "types": ["node", "vscode"],
   },
   "include": [
     "test/**/*.ts",

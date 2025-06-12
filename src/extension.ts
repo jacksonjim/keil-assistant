@@ -1,6 +1,7 @@
+import type {
+    ExtensionContext, OutputChannel, StatusBarItem} from 'vscode';
 import {
-    ExtensionContext, OutputChannel,
-    StatusBarAlignment, StatusBarItem,
+    StatusBarAlignment,
     commands, env, l10n, window
 } from 'vscode';
 
@@ -11,20 +12,19 @@ import { ResourceManager } from './ResourceManager';
 
 import { stat } from 'fs';
 import { ProjectExplorer } from './ui/ProjectExplorer';
-import { IView } from './core/IView';
+import type { IView } from './core/IView';
 
 let myStatusBarItem: StatusBarItem;
 let channel: OutputChannel;
 
 export function activate(context: ExtensionContext) {
-    console.log('---- keil-assistant actived >>>  ----');
-    if (channel === undefined) {
-        channel = window.createOutputChannel('keil-vscode');
-    }
+    console.info('---- keil-assistant actived >>>  ----');
+    channel ??= window.createOutputChannel('keil-vscode');
     myStatusBarItem = window.createStatusBarItem(StatusBarAlignment.Left, 200);
     myStatusBarItem.command = 'statusbar.project';
 
     const testKeilRoot = ResourceManager.getInstance(context).getKeilRootDir("MDK");
+
     stat(testKeilRoot, (err, stat) => {
         if (err || !stat.isDirectory()) {
             channel.show();
@@ -53,17 +53,20 @@ export function activate(context: ExtensionContext) {
 
                 // load project
                 const uvPrjPath = uri[0].fsPath;
+
                 await prjExplorer.openProject(uvPrjPath, false);
                 // switch workspace
                 const msg = l10n.t('keil project load done ! switch workspace ?');
                 const result = await window.showInformationMessage(msg, l10n.t('Ok'), l10n.t('Later'));
+
                 if (result === l10n.t('Ok')) {
                    prjExplorer.openWorkspace(new File(dirname(uvPrjPath)));
                 }
             }
         } catch (error) {
             const errMsg = l10n.t('Open project failed! msg');
-            window.showErrorMessage(`${errMsg}: ${(<Error>error).message}`);
+
+            window.showErrorMessage(`${errMsg}: ${(error as Error).message}`);
         }
     }));
 
@@ -75,21 +78,21 @@ export function activate(context: ExtensionContext) {
 
     subscriber.push(commands.registerCommand('project.download', (item: IView) => prjExplorer.getTarget(item)?.download()));
 
-    subscriber.push(commands.registerCommand('item.copyValue', (item: IView) => env.clipboard.writeText(item.tooltip || '')));
+    subscriber.push(commands.registerCommand('item.copyValue', (item: IView) => env.clipboard.writeText(item.tooltip ?? '')));
 
     subscriber.push(commands.registerCommand(projectSwitchCommandId, (item: IView) => prjExplorer.switchTargetByProject(item)));
 
     subscriber.push(commands.registerCommand('project.active', (item: IView) => prjExplorer.activeProject(item)));
 
     subscriber.push(commands.registerCommand('statusbar.project', async () => {
-        prjExplorer.statusBarSwitchTargetByProject();
+        void prjExplorer.statusBarSwitchTargetByProject();
     }));
 
 
     subscriber.push(myStatusBarItem);
 
-    prjExplorer.loadWorkspace();
-    console.log('---- keil-assistant actived <<<< ----');
+    void prjExplorer.loadWorkspace();
+    console.info('---- keil-assistant actived <<<< ----');
 }
 
 export function deactivate() {

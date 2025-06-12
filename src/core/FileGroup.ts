@@ -1,5 +1,5 @@
-import { IView } from "./IView";
-import { Source } from "./Source";
+import type { IView } from "./IView";
+import type { Source } from "./Source";
 
 export class FileGroup implements IView {
 
@@ -20,15 +20,15 @@ export class FileGroup implements IView {
         this.tooltip = gName;
         this._disabled = disabled;
         const iconName = disabled ? 'FolderExclude_32x' : 'Folder_32x';
+
         this.icons = { light: iconName, dark: iconName };
     }
 
     private _cachedChildren?: IView[];
     getChildViews(): IView[] | undefined {
         // return this.sources;
-        if (!this._cachedChildren) {
-            this._cachedChildren = [...this.sources];
-        }
+        this._cachedChildren ??= [...this.sources];
+
         return this._cachedChildren;
     }
 
@@ -36,6 +36,7 @@ export class FileGroup implements IView {
         if (this._disabled !== disabled) {
             this._disabled = disabled;
             const iconName = disabled ? 'FolderExclude_32x' : 'Folder_32x';
+
             this.icons = { light: iconName, dark: iconName };
             this._cachedChildren = undefined; // 清除缓存
         }

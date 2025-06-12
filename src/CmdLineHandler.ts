@@ -14,12 +14,10 @@ export class CmdLineHandler {
         const callerHeader = isPowershell ? '& ' : '';
         const cmdPrefixSuffix = isPowershell ? '' : '"';
 
-        const commandLine: string = cmdPrefixSuffix + callerHeader
-            + this.quoteString(callerFile, quote) + ' '
-            + args.map((arg) => {
-                return noQuote ? arg : this.quoteString(arg, quote);
-            }).join(' ')
-            + cmdPrefixSuffix;
+        const commandLine: string = `${cmdPrefixSuffix + callerHeader
+            + this.quoteString(callerFile, quote)  } ${
+             args.map((arg) => noQuote ? arg : this.quoteString(arg, quote)).join(' ')
+             }${cmdPrefixSuffix}`;
 
         return commandLine;
     }

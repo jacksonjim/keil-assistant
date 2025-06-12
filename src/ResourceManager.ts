@@ -5,9 +5,9 @@ import * as ini from 'ini';
 let _instance: ResourceManager | undefined;
 
 const dirList: string[] = [
-    File.sep + 'bin',
-    File.sep + 'res',
-    File.sep + 'res' + File.sep + 'icons'
+    `${File.sep  }bin`,
+    `${File.sep  }res`,
+    `${File.sep  }res${  File.sep  }icons`
 ];
 
 export class ResourceManager {
@@ -31,6 +31,7 @@ export class ResourceManager {
                 throw Error('context can\'t be undefined');
             }
         }
+
         return _instance;
     }
 
@@ -38,6 +39,7 @@ export class ResourceManager {
         // init dirs
         for (const path of dirList) {
             const f = new File(this.extensionDir.path + path);
+
             if (f.isDir()) {
                 this.dirMap.set(f.noSuffixName, f);
             }
@@ -45,6 +47,7 @@ export class ResourceManager {
 
         // init icons
         const iconDir = this.dirMap.get('icons');
+
         if (iconDir) {
             for (const icon of iconDir.getList([/\.svg$/i], File.emptyFilter)) {
                 this.iconMap.set(icon.noSuffixName, icon.path);
@@ -71,35 +74,42 @@ export class ResourceManager {
         if (compiler === "ARMCC") {
             return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCC${File.sep}bin${File.sep}armcc.exe`;
         }
+
         return undefined;
     }
 
     getKeilRootDir(target: string): string {
         const homePath = this.getHomePath(target);
-        return homePath ? homePath : "C:\\Keil_v5";
+
+        return homePath ?? "C:\\Keil_v5";
     }
 
     getPackDir(target: string): string {
-        var path : string | undefined = undefined;
+        var path: string | undefined = undefined;
         const homePath = this.getKeilRootDir(target);
+
         try {
-            const iniFile = new File(homePath + File.sep + 'TOOLS.INI');
+            const iniFile = new File(`${homePath + File.sep  }TOOLS.INI`);
             const iniContent = iniFile.read();
             const parsed = ini.parse(iniContent);
+
             path = parsed['UV2']['RTEPATH'].replace(/^["']+|["']+$/g, '');
         } catch (e) {
             console.error("Error reading TOOL.INI file:", e);
         }
 
-        return path || homePath + File.sep + 'ARM' + File.sep + 'PACK';
+        return path ?? `${homePath + File.sep  }ARM${  File.sep  }PACK`;
     }
 
     private getHomePath(target: string): string | undefined {
         const homeObj = this.getAppConfig().get<object>("Keil.HOME");
+
         if (homeObj) {
             const pathMap = new Map<string, string>(Object.entries(homeObj));
-            return pathMap.get(target) || pathMap.get("MDK");
+
+            return pathMap.get(target) ?? pathMap.get("MDK");
         }
+
         return undefined;
     }
 
@@ -108,19 +118,20 @@ export class ResourceManager {
     }
 
     getProjectExcludeList(): string[] {
-        return this.getAppConfig().get<string[]>('Project.ExcludeList') || [];
+        return this.getAppConfig().get<string[]>('Project.ExcludeList') ?? [];
     }
 
     getProjectFileLocationList(): string[] {
-        return this.getAppConfig().get<string[]>('Project.FileLocationList') || [];
+        return this.getAppConfig().get<string[]>('Project.FileLocationList') ?? [];
     }
 
     getProjectCustomIncludePaths(): string[] {
-        return this.getAppConfig().get<string[]>('Project.CustomIncludePaths') || [];
+        return this.getAppConfig().get<string[]>('Project.CustomIncludePaths') ?? [];
     }
 
     getIconByName(name: string): vscode.Uri {
         const icon = this.iconMap.get(name);
+
         return vscode.Uri.file(icon!);
     }
 
@@ -130,6 +141,7 @@ export class ResourceManager {
 
     public getProjectFileFindMaxDepth(): number {
         const depth = this.getAppConfig().get<number>("Project.FindMaxDepth");
-        return depth ? depth : 1;
+
+        return depth ?? 1;
     }
 }

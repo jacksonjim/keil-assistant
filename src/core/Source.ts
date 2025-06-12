@@ -1,5 +1,5 @@
-import { File } from '../node_utility/File';
-import { IView } from './IView';
+import type { File } from '../node_utility/File';
+import type { IView } from './IView';
 
 export class Source implements IView {
 
@@ -23,6 +23,7 @@ export class Source implements IView {
         this.tooltip = file.path;
 
         let iconName = '';
+
         if (file.isFile() === false) {
             iconName = 'FileWarning_16x';
         } else if (_enable === false) {

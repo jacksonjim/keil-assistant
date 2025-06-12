@@ -1,4 +1,4 @@
-export interface IView {
+export type IView = {
 
     label: string;
 

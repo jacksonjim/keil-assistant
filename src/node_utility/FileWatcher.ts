@@ -1,6 +1,7 @@
 import { File } from "./File";
 import * as events from "events";
-import { FSWatcher, watch } from "chokidar";
+import type { FSWatcher} from "chokidar";
+import { watch } from "chokidar";
 
 export class FileWatcher {
 
@@ -24,6 +25,7 @@ export class FileWatcher {
     on(event: 'error', listener: (err: Error) => void): this;
     on(event: any, listener: (arg?: any) => void): this {
         this._event.on(event, listener);
+
         return this;
     }
 
@@ -58,16 +60,17 @@ export class FileWatcher {
                 this._event.emit('error', err);
             });
         }
+
         return this;
     }
 
     close() {
         if (this.selfWatcher) {
-            this.selfWatcher.close();
+            void this.selfWatcher.close();
             this.selfWatcher = undefined;
         }
         if (this.watcher) {
-            this.watcher.close();
+            void this.watcher.close();
             this.watcher = undefined;
         }
     }

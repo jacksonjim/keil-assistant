@@ -2,7 +2,7 @@ let instance: Time;
 
 //Format Example: 2019/9/22|10:12:23|GMT...
 
-export interface TimeInfo {
+export type TimeInfo = {
     year: number;
     month: number;
     date: number;
@@ -29,6 +29,7 @@ export class Time {
             return instance;
         }
         instance = new Time();
+
         return instance;
     }
 
@@ -36,12 +37,14 @@ export class Time {
         this.date.setTime(Date.now());
         let dateStr = this.getDateString();
         const tList = this.date.toTimeString().split(' ');
+
         dateStr += this.separater + tList[0] + this.separater + tList[1];
+
         return dateStr;
     }
 
     private getDateString(): string {
-        return this.date.getFullYear().toString() + '/' + (this.date.getMonth() + 1).toString() + '/' + this.date.getDate().toString();
+        return `${this.date.getFullYear().toString()  }/${  (this.date.getMonth() + 1).toString()  }/${  this.date.getDate().toString()}`;
     }
 
     getTimeInfo(): TimeInfo {
@@ -81,9 +84,9 @@ export class Time {
     }
 
     stringify(timeData: TimeInfo): string {
-        return timeData.year.toString() + '/' + timeData.month.toString() + '/' + timeData.date.toString() + '|'
-            + timeData.hour.toString() + ':' + timeData.minute.toString() + ':' + timeData.second.toString() + '|'
-            + timeData.region;
+        return `${timeData.year.toString()  }/${  timeData.month.toString()  }/${  timeData.date.toString()  }|${
+             timeData.hour.toString()  }:${  timeData.minute.toString()  }:${  timeData.second.toString()  }|${
+             timeData.region}`;
     }
 
     setTimeSeparater(sep: string) {
