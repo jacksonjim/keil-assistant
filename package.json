@@ -67,7 +67,8 @@
     "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
     "vscode:prepublish": "yarn run webpack",
     "vsce-package": "vsce package --no-yarn",
-    "vsce-publish": "vsce publish --no-yarn"
+    "vsce-publish": "vsce publish --no-yarn",
+    "deploy": "vsce publish --yarn"
   },
   "dependencies": {
     "@vscode/l10n": "^0.0.18"
