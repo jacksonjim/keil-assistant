@@ -13,7 +13,8 @@
         "noUnusedLocals": true,
         "strictNullChecks": true,
         "strict": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "skipLibCheck": true
     },
     "include": [
         "test/**/*.ts",
@@ -23,7 +24,6 @@
         "src/**/*.ts"
     ],
     "exclude": [
-        "node_modules/@types/eslint-scope/node_modules/@types/eslint/index.d.ts",
         "node_modules/**"
     ]
 }
