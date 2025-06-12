@@ -1,7 +1,8 @@
 //@ts-check
 'use strict';
 
-import { resolve as _resolve } from 'path';
+import { resolve , dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -12,7 +13,7 @@ const config = {
     // mode: 'none',
     entry: './src/extension.ts',
     output: {
-        path: _resolve(__dirname, 'dist', 'src'),
+        path: resolve(dirname(fileURLToPath(import.meta.url)), 'dist', 'src'),
         filename: 'extension.js',
         libraryTarget: "commonjs2",
         devtoolModuleFilenameTemplate: "../[resource-path]"
