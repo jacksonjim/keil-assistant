@@ -12,7 +12,7 @@ jobs:
   build:
     strategy:
       matrix:
-        os: [ubuntu-latest] # 保持单OS构建
+        os: [ubuntu-latest]
     
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
@@ -29,26 +29,27 @@ jobs:
       - name: Install Yarn
         run: npm install -g yarn
 
-      - name: Set env RELEASE_VERSION
-        run: echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-
-      - name: Set env VERSION
-        run: echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-
       - name: Install dependencies
-        run: npm install
+        run: yarn install
 
       - name: Build package
-        run: npx vsce package --no-yarn
+        run: vsce package --yarn
+
+      - name: Set env RELEASE_VERSION
+        if: success()
+        run: 
+          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
+          echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
 
       - name: Extract Release Notes from CHANGELOG.md
+        if: success()
         run: |
           VERSION=${{ env.VERSION }}
-          awk "/^## \\[v?${VERSION}\\]/ {flag=1; next} /^## /{flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
+          awk "/^## \[v${VERSION}\]/ {flag=1; next} /^## \[/ {flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
-        if: github.ref_type == 'tag'
+        if: success() && github.ref_type == 'tag'
         with:
           body_path: RELEASE_BODY.md
           draft: false
