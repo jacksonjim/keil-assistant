@@ -362,8 +362,8 @@ export abstract class PTarget implements IView {
                 const numRead = readSync(fd, buf, 0, 4096, prev.size);
                 if (numRead > 0) {
                     curPos += numRead;
-                    const txt = this.dealLog(buf.slice(0, numRead));
-                    this.taskChannel?.append(txt);
+                    const txt = this.dealLog(buf.subarray(0, numRead));
+                    this.taskChannel?.appendLine(txt);
                 }
             }
         });
@@ -391,8 +391,8 @@ export abstract class PTarget implements IView {
                 const numRead = readSync(fd, buf, 0, 4096, curPos);
                 if (numRead > 0) {
                     curPos += numRead;
-                    const txt = this.dealLog(buf.slice(0, numRead));
-                    this.taskChannel?.append(txt);
+                    const txt = this.dealLog(buf.subarray(0, numRead));
+                    this.taskChannel?.appendLine(txt);
                 }
             }
             this.taskChannel?.appendLine(`Build Finished!`);
