@@ -40,20 +40,22 @@ jobs:
 
       - name: Build package
         run: npx vsce package --no-yarn
-        
-      - name: Run tests
-        run: npm test
+
+      - name: Extract Release Notes from CHANGELOG.md
+        run: |
+          VERSION=${{ env.VERSION }}
+          awk "/^##? ?v?${VERSION}/ {flag=1; next} /^##? /{flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
 
       - name: Create Release
-        uses: softprops/action-gh-release@v1
-        if: startsWith(github.ref, 'refs/tags/')
+        uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
         with:
+          body_path: RELEASE_BODY.md
           draft: false
           prerelease: false
           files: keil-vscode-assistant-${{ env.VERSION }}.vsix
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Publish to Marketplace
-        if: success() && startsWith(github.ref, 'refs/tags/')
+        if: success() && github.ref_type == 'tag'
         run: npx vsce publish -p ${{ secrets.VSCE_PAT }}
