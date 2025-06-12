@@ -1,13 +1,9 @@
 import * as path from 'path';
 import * as Mocha from 'mocha';
-import { glob, globSync, globStream, globStreamSync, Glob } from 'glob'
+import { glob} from 'glob'
 
 export function run(): Promise<void> {
 	// Create the mocha test
-	const mocha = new Mocha({
-		ui: 'tdd',
-		color: true
-	});
 
 	const testsRoot = path.resolve(__dirname, '..');
 

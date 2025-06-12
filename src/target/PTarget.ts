@@ -72,17 +72,6 @@ export abstract class PTarget implements IView {
         return target;
     }
 
-    private hashCode(str: string): number {
-        let hash = 0;
-        if (str.length === 0) return hash;
-        for (let i = 0; i < str.length; i++) {
-            const char = str.charCodeAt(i);
-            hash = ((hash << 5) - hash) + char; // 等价于 hash * 31 + char
-            hash |= 0; // 将结果转换为 32 位整数
-        }
-        return hash;
-    }
-
     on(event: 'dataChanged', listener: () => void): void;
     on(event: any, listener: () => void): void {
         this._event.on(event, listener);
@@ -331,10 +320,6 @@ export abstract class PTarget implements IView {
         this.updateCppProperties(cStandard, cppStandard, intelliSenseMode, compilerPath, compilerArgs);
 
         this.updateSourceRefs();
-    }
-
-    private sleep(ms: number): Promise<void> {
-        return new Promise(resolve => setTimeout(resolve, ms));
     }
 
     private runAsyncTask(name: string, type: 'b' | 'r' | 'f' = 'b') {
