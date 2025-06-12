@@ -1,7 +1,7 @@
 //@ts-check
 'use strict';
 
-const path = require('path');
+import { resolve as _resolve } from 'path';
 
 //@ts-check
 /** @typedef {import('webpack').Configuration} WebpackConfig **/
@@ -12,7 +12,7 @@ const config = {
     // mode: 'none',
     entry: './src/extension.ts',
     output: {
-        path: path.resolve(__dirname, 'dist', 'src'),
+        path: _resolve(__dirname, 'dist', 'src'),
         filename: 'extension.js',
         libraryTarget: "commonjs2",
         devtoolModuleFilenameTemplate: "../[resource-path]"
@@ -59,16 +59,6 @@ const config = {
 };
 
 // export default [config];
-module.exports = (env) => {
-    // if (env.vscode_nls) {
-    //     // rewrite nls cal when being asked for 
-    //     //@ts-ignore
-    //     config.module?.rules?.unshift({
-    //         loader: 'vscode-nls-dev/lib/webpack-loader',
-    //         options: {
-    //             base: `${__dirname}/src`
-    //         }
-    //     })
-    // }
+export default () => {
     return config;
 };

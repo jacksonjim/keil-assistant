@@ -63,7 +63,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
             return;
         }
 
-        this.workspacePath = workspace.workspaceFile && /^file:/.test(workspace.workspaceFile.toString())
+        this.workspacePath = workspace.workspaceFile && workspace.workspaceFile.toString().startsWith('file:')
             ? dirname(workspace.workspaceFile.fsPath)
             : workspace.workspaceFolders[0].uri.fsPath;
 

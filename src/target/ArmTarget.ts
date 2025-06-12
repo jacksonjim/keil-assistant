@@ -1,4 +1,3 @@
-
 import { File } from '../node_utility/File';
 import { ResourceManager } from '../ResourceManager';
 import type { KeilProjectInfo } from '../core/KeilProjectInfo';
@@ -161,11 +160,7 @@ export class ArmTarget extends PTarget {
     }
 
     protected getOutputFolder(target: any): string | undefined {
-        try {
-            return target['TargetOption']['TargetCommonOption']['OutputDirectory'] as string;
-        } catch (_error) {
-            return undefined;
-        }
+        return target?.['TargetOption']?.['TargetCommonOption']?.['OutputDirectory'] ?? undefined;
     }
 
     private gnuParseRefLines(lines: string[]): string[] {
@@ -272,7 +267,8 @@ export class ArmTarget extends PTarget {
                 });
 
             return resList;
-        } catch (_error) {
+        } catch (err) {
+            console.warn('getArmClangMacroList failed:', err);
             return ['__GNUC__=4', '__GNUC_MINOR__=2', '__GNUC_PATCHLEVEL__=1'];
         }
     }
@@ -427,9 +423,9 @@ export class ArmTarget extends PTarget {
                 if (fpu === 'NO_FPU') {
                     if (dsp === 'NO_DSP') {
                         if (mve === 'NO_MVE') {
-                            return '-march=armv8.1-m.main+nofp -mfloat-abi=soft';
+                            return '-march=armv8.1-m.main+nofp+nomve';
                         }
-                        return '-march=armv8.1-m.main+mve+nofp -mfloat-abi=soft';
+                        return '-march=armv8.1-m.main+nofp';
                     }
                     if (mve === 'NO_MVE') {
                         return '-march=armv8.1-m.main+dsp+nofp -mfloat-abi=soft';

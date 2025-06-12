@@ -1,4 +1,3 @@
-
 # ignore vscode settings for extension development
 .vscode/**
 .vscode-test/**
@@ -36,8 +35,6 @@ tsconfig.json
 test.tsconfig.json
 ui.tsconfig.json
 tslint.json
-.eslintrc.js
-.eslintignore
 webpack.config.js
 tscCompileList.txt
 gulpfile.js

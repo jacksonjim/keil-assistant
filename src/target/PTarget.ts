@@ -152,25 +152,19 @@ export abstract class PTarget implements IView {
 
         // 生成 .clangd 文件内容    
         const clangdConfig = {
-            // eslint-disable-next-line @typescript-eslint/naming-convention
             CompileFlags: {
-                // eslint-disable-next-line @typescript-eslint/naming-convention
                 Add: [
-                    // 使用 map 生成包含路径参数
                     ...includeArray.map((inc) => `-I${inc.replace(/\${workspaceFolder}/g, workspaceDir)}`),
-                    // 使用 map 生成宏定义参数
                     ...defineArray.map((def) => `-D${def}`),
-                    // 展开编译器参数，如果不存在则为空数组
                     ...(compilerArgs ?? [])
                 ],
-                // eslint-disable-next-line @typescript-eslint/naming-convention
                 Compiler: compilerPath,
             }
         };
 
         this.clangdContext = yaml.dump(clangdConfig, {
             noRefs: true,
-            lineWidth: -1 // 防止折行
+            lineWidth: -1
         });
     }
 
@@ -301,9 +295,9 @@ export abstract class PTarget implements IView {
             const fileList = [group['Files']]
                 .flat()
                 .flatMap(list =>
-                    [list?.File]  // 统一处理可能存在的 File 属性
-                        .flat()    // 展平嵌套结构
-                        .filter(Boolean) // 过滤无效条目
+                    [list?.File]
+                        .flat()
+                        .filter(Boolean)
                 )
                 .map(fItem => ({
                     ...fItem,

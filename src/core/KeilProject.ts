@@ -1,4 +1,3 @@
-
 import { EventEmitter as EventsEmitter } from 'events';
 import { FileWatcher } from '../node_utility/FileWatcher';
 import { File } from '../node_utility/File';
@@ -10,7 +9,7 @@ import { XMLParser } from 'fast-xml-parser';
 import { normalize } from 'path';
 import type { KeilProjectInfo } from './KeilProjectInfo';
 
-import type { OutputChannel} from 'vscode';
+import type { OutputChannel } from 'vscode';
 import { window } from 'vscode';
 import type { IView } from './IView';
 import type { PTarget, UVisonInfo } from '../target/PTarget';
@@ -59,11 +58,10 @@ export class KeilProject implements IView, KeilProjectInfo {
         this.uVsionFileInfo = {} as UVisonInfo;
         this.targetList = [];
         this.workspaceDir = workspace;
-        this.vscodeDir = new File(`${workspace + File.sep  }.vscode`);
+        this.vscodeDir = new File(`${workspace + File.sep}.vscode`);
         this.vscodeDir.createDir();
-        const logPath = `${this.vscodeDir.path + File.sep  }keil-assistant.log`;
+        const logPath = `${this.vscodeDir.path + File.sep}keil-assistant.log`;
 
-        // eslint-disable-next-line no-console
         this.logger = new console.Console(createWriteStream(logPath, { flags: 'a+' }));
         this.uvprjFile = _uvprjFile;
         this.watcher = new FileWatcher(this.uvprjFile);
@@ -71,7 +69,7 @@ export class KeilProject implements IView, KeilProjectInfo {
         this.prjID = this.getMD5(_uvprjFile.path);
         this.label = _uvprjFile.noSuffixName;
         this.tooltip = _uvprjFile.path;
-        this.logger.log(`[info] Log at : ${  Time.getInstance().getTimeStamp()  }\r\n`);
+        this.logger.log(`[info] Log at : ${Time.getInstance().getTimeStamp()}\r\n`);
         this.getKeilVscodeProperties();
         this.watcher.onChanged = () => {
             if (this.prevUpdateTime === undefined ||
@@ -100,7 +98,7 @@ export class KeilProject implements IView, KeilProjectInfo {
 
             if (code === 'EBUSY') {
                 this.logger.log(`[Warn] uVision project file '${this.uvprjFile.name}' is locked !, delay 500 ms and retry !`);
-                setTimeout(() => {void this.onReload();}, 500);
+                setTimeout(() => { void this.onReload(); }, 500);
             } else {
                 window.showErrorMessage(`reload project failed !, msg: ${err["message"]}`);
             }
@@ -209,7 +207,7 @@ export class KeilProject implements IView, KeilProjectInfo {
     close() {
         this.watcher.close();
         this.targetList.forEach((target) => target.close());
-        this.logger.log(`[info] project closed: ${  this.label}`);
+        this.logger.log(`[info] project closed: ${this.label}`);
     }
 
     toAbsolutePath(rePath: string): string {
@@ -246,7 +244,7 @@ export class KeilProject implements IView, KeilProjectInfo {
             this.notifyUpdateView(); // notify data changed
         }
     }
-    
+
     updateClangdFile() {
         this.getActiveTarget()?.updateClangdFile();
     }
