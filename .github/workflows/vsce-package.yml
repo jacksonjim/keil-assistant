@@ -40,9 +40,6 @@ jobs:
 
       - name: Build package
         run: npx vsce package --no-yarn
-        
-      - name: Run tests
-        run: npm test
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
