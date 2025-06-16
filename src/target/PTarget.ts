@@ -2,7 +2,7 @@ import type { IView } from "../core/IView";
 import { EventEmitter as EventsEmitter } from 'events';
 import { File } from "../node_utility/File";
 import type { KeilProjectInfo } from "../core/KeilProjectInfo";
-import type { OutputChannel} from "vscode";
+import type { OutputChannel } from "vscode";
 import { commands, l10n, window } from "vscode";
 import { FileGroup } from "../core/FileGroup";
 import { normalize, resolve } from 'path';
@@ -12,6 +12,8 @@ import { closeSync, openSync, readSync, statSync, watchFile, writeFileSync } fro
 import { spawn } from "child_process";
 import { decode } from "iconv-lite";
 import * as yaml from 'js-yaml';
+import { CompileCommand, CppProperty } from "./comm";
+import path = require("path");
 
 export type UVisonInfo = {
     schemaVersion: string | undefined;
@@ -63,7 +65,8 @@ export abstract class PTarget implements IView {
         this.includes = new Set();
         this.defines = new Set();
         this.fGroups = [];
-        this.uv4LogFile = new File(`${this.project.vscodeDir.path + File.sep + this.targetName  }_uv4.log`);
+
+        this.uv4LogFile = new File(path.posix.join(this.project.vscodeDir.path, `${this.targetName}_uv4.log`));
     }
 
     private getCppConfigName(project: KeilProjectInfo, target: string): string {
@@ -79,83 +82,79 @@ export abstract class PTarget implements IView {
         this._event.on(event, listener);
     }
 
-    private getDefCppProperties(): any {
-        return {
-            configurations: [
-                {
-                    name: this.cppConfigName,
-                    intelliSenseMode: '${default}',
-                    compilerPath: undefined,
-                    cStandard: 'c99',
-                    cppStandard: 'c++03',
-                    includePath: undefined,
-                    defines: undefined
-                }
-            ],
-            version: 4
-        };
-    }
-
     private lastCppConfig = '';
 
     private updateCppProperties(cStandard: string, cppStandard: string, intelliSenseMode: string, compilerPath?: string, compilerArgs?: string[]) {
 
-        const proFile = new File(`${this.project.vscodeDir.path + File.sep  }c_cpp_properties.json`);
-        let obj: any;
+        const proFile = new File(path.posix.join(this.project.vscodeDir.path, 'c_cpp_properties.json'));
+        const ccFile = new File(path.posix.join(this.project.workspaceDir!, 'compile_commands.json'));
+
+        let cppProperties: any = { configurations: [], version: 4 };
 
         if (proFile.isFile()) {
             try {
-                obj = JSON.parse(proFile.read());
+                cppProperties = JSON.parse(proFile.read());
             } catch (error) {
                 this.project.logger.log(`[Error] c_cpp_properties.json parse error: ${error}`);
-                obj = this.getDefCppProperties();
             }
-        } else {
-            obj = this.getDefCppProperties();
         }
 
-        const configList: any[] = obj['configurations'];
-        const index = configList.findIndex((conf) => conf.name === this.cppConfigName);
+        let compileCmds: CompileCommand[] = [];
+        if (ccFile.isFile() && ccFile.isExist()) {
+            try {
+                compileCmds = JSON.parse(ccFile.read());
+            } catch (error) {
+                this.project.logger.log(`[Error] c_cpp_properties.json parse error: ${error}`);
+            }
+        }
+
+        const configurations: CppProperty[] = cppProperties['configurations'];
+        const index = configurations.findIndex((conf) => conf.name === this.cppConfigName);
+
+        // 提前将 Set 转换为数组，避免多次调用 Array.from
+        const includeArray = Array.from(this.includes);
+        const defineArray = Array.from(this.defines);
+        compilerPath = compilerPath?.replace(/\\/g, '/'); // 替换反斜杠为正斜杠
+        intelliSenseMode = intelliSenseMode.replace(/\\/g, '/'); // 替换反斜杠为正斜杠  
 
         if (index === -1) {
-            configList.push({
+            configurations.push({
                 name: `${this.cppConfigName}`,
                 cStandard,
                 cppStandard,
                 compilerPath,
                 compilerArgs,
                 intelliSenseMode,
-                includePath: Array.from(this.includes),
-                defines: Array.from(this.defines)
+                includePath: includeArray,
+                defines: defineArray
             });
         } else {
-            configList[index]['compilerPath'] = compilerPath;
-            configList[index]['compilerArgs'] = compilerArgs;
-            configList[index]['cStandard'] = cStandard;
-            configList[index]['cppStandard'] = cppStandard;
-            configList[index]['intelliSenseMode'] = intelliSenseMode;
-            configList[index]['includePath'] = Array.from(this.includes);
-            configList[index]['defines'] = Array.from(this.defines);
+            configurations[index]['compilerPath'] = compilerPath;
+            configurations[index]['compilerArgs'] = compilerArgs;
+            configurations[index]['cStandard'] = cStandard;
+            configurations[index]['cppStandard'] = cppStandard;
+            configurations[index]['intelliSenseMode'] = intelliSenseMode;
+            configurations[index]['includePath'] = includeArray;
+            configurations[index]['defines'] = defineArray;
         }
 
-        const newConfig = JSON.stringify(obj, undefined, 4);
+        const newConfig = JSON.stringify(cppProperties, undefined, 4);
 
         if (this.lastCppConfig !== newConfig) {
             proFile.write(newConfig);
             this.lastCppConfig = newConfig;
         }
         // 提前获取工作区目录，避免多次访问属性
-        const workspaceDir = this.project.workspaceDir ?? ".";
-        // 提前将 Set 转换为数组，避免多次调用 Array.from
-        const includeArray = Array.from(this.includes);
-        const defineArray = Array.from(this.defines);
+        const workspaceDir = this.project.workspaceDir?.replace(/\\/g, '/') ?? ".";
+        const incList = includeArray.map((inc) => `-I${inc}`);
+        const defList = defineArray.map((def) => `-D${def}`);
 
         // 生成 .clangd 文件内容    
         const clangdConfig = {
             CompileFlags: {
                 Add: [
-                    ...includeArray.map((inc) => `-I${inc.replace(/\${workspaceFolder}/g, workspaceDir)}`),
-                    ...defineArray.map((def) => `-D${def}`),
+                    ...incList,
+                    ...defList,
                     ...(compilerArgs ?? [])
                 ],
                 Compiler: compilerPath,
@@ -166,10 +165,55 @@ export abstract class PTarget implements IView {
             noRefs: true,
             lineWidth: -1
         });
+
+        let files = this.fGroups.map(fg => fg.label).join(',');
+
+        const ci = compileCmds.findIndex(item => item.configuration === this.cppConfigName);
+        const workspacePath = workspaceDir.replace(workspaceDir, '.');
+
+
+        if (ci === -1) {
+            compileCmds.push({
+                configuration: `${this.cppConfigName}`,
+                directory: `${workspacePath}`,
+                file: `**/{${files}}/**/*.c`,
+                arguments: [
+                    `${compilerPath}`,
+                    ...incList,
+                    ...defList,
+                    ...(compilerArgs ?? []),
+                    `-std=${cStandard}`,
+                    "-c",
+                    "{file}",
+                    "-o",
+                    "build/{file_dir}/{file_base}.o"
+                ]
+            });
+        } else {
+            compileCmds[ci] = {
+                configuration: `${this.cppConfigName}`,
+                directory: workspacePath,
+                file: `**/{${files}}/**/*.c`,
+                arguments: [
+                    `${compilerPath}`,
+                    ...incList,
+                    ...defList,
+                    ...(compilerArgs ?? []),
+                    `-std=${cStandard}`,
+                    "-c",
+                    "{file}",
+                    "-o",
+                    "build/{file_dir}/{file_base}.o"
+                ]
+            };
+        }
+
+        ccFile.write(JSON.stringify(compileCmds, undefined, 4));
+
     }
 
     updateClangdFile() {
-        const clangdFile = new File(`${this.project.workspaceDir + File.sep  }.clangd`);
+        const clangdFile = new File(`${this.project.workspaceDir}${File.sep}.clangd`);
 
         if (this.clangdContext) {
             clangdFile.write(this.clangdContext);
