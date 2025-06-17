@@ -248,7 +248,7 @@ export abstract class PTarget implements IView {
         //this.includes.add('${workspaceFolder}/**');
 
         if (rteIncludes !== undefined)
-            this.includes.add("${workspaceFolder}/RTE/" + `_${this.targetName.replace(" ", "_")}`);
+            this.includes.add("RTE/" + `_${this.targetName.replace(" ", "_")}`);
 
         if (sysIncludes) {
             sysIncludes.forEach((incPath) => {
