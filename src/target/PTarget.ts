@@ -3,7 +3,7 @@ import { EventEmitter as EventsEmitter } from 'events';
 import { File } from "../node_utility/File";
 import type { KeilProjectInfo } from "../core/KeilProjectInfo";
 import type { OutputChannel } from "vscode";
-import { commands, l10n, window } from "vscode";
+import { commands, InlayHint, l10n, window } from "vscode";
 import { FileGroup } from "../core/FileGroup";
 import { normalize, resolve } from 'path';
 import { ResourceManager } from "../ResourceManager";
@@ -14,6 +14,7 @@ import { decode } from "iconv-lite";
 import * as yaml from 'js-yaml';
 import { CompileCommand, CppProperty } from "./comm";
 import path = require("path");
+import { isLinux } from "chokidar/handler";
 
 export type UVisonInfo = {
     schemaVersion: string | undefined;
@@ -49,7 +50,13 @@ export abstract class PTarget implements IView {
     // private uv4LogLockFileWatcher: FileWatcher;
     private isTaskRunning = false;
     private taskChannel: OutputChannel | undefined;
-    private clangdContext: string | undefined;
+    private cStandard: string;
+    private cppStandard: string;
+    private intelliSenseMode: string | undefined;
+    private toolName: string;
+    private compilerPath: string | undefined;
+    private clangdFile: File;
+    private compileFlagsFile: File;
 
     constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
         this._event = new EventsEmitter();
@@ -62,10 +69,15 @@ export abstract class PTarget implements IView {
         this.label = this.targetName;
         this.tooltip = this.targetName;
         this.cppConfigName = this.getCppConfigName(prjInfo, this.targetName);
+        this.toolName = this.getToolName(this.targetDOM);
+        this.compilerPath = ResourceManager.getInstance().getCompilerPath(this.getKeilPlatform(), this.toolName)?.replace(/\\/g, '/');
         this.includes = new Set();
         this.defines = new Set();
         this.fGroups = [];
-
+        this.cStandard = 'c11';
+        this.cppStandard = 'c++17';
+        this.clangdFile = new File(`${this.project.workspaceDir}${File.sep}.clangd`);
+        this.compileFlagsFile = new File(path.posix.join(this.project.workspaceDir!, 'compile_flags.txt'));
         this.uv4LogFile = new File(path.posix.join(this.project.vscodeDir.path, `${this.targetName}_uv4.log`));
     }
 
@@ -84,11 +96,11 @@ export abstract class PTarget implements IView {
 
     private lastCppConfig = '';
 
-    private updateCppProperties(cStandard: string, cppStandard: string, intelliSenseMode: string, compilerPath?: string, compilerArgs?: string[]) {
+    private updateCppProperties() {
 
         const proFile = new File(path.posix.join(this.project.vscodeDir.path, 'c_cpp_properties.json'));
         const ccFile = new File(path.posix.join(this.project.workspaceDir!, 'compile_commands.json'));
-
+        const compilerArgs = this.toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
         let cppProperties: any = { configurations: [], version: 4 };
 
         if (proFile.isFile()) {
@@ -110,32 +122,24 @@ export abstract class PTarget implements IView {
 
         const configurations: CppProperty[] = cppProperties['configurations'];
         const index = configurations.findIndex((conf) => conf.name === this.cppConfigName);
-
+        const compilerPath = this.targetName.startsWith("ARM") ? this.compilerPath : undefined;
         // 提前将 Set 转换为数组，避免多次调用 Array.from
         const includeArray = Array.from(this.includes);
         const defineArray = Array.from(this.defines);
-        compilerPath = compilerPath?.replace(/\\/g, '/'); // 替换反斜杠为正斜杠
-        intelliSenseMode = intelliSenseMode.replace(/\\/g, '/'); // 替换反斜杠为正斜杠  
-
+        const cppProperty = {
+            name: `${this.cppConfigName}`,
+            cStandard: this.cStandard,
+            cppStandard: this.cppStandard,
+            compilerPath,
+            compilerArgs,
+            intelliSenseMode: this.intelliSenseMode,
+            includePath: includeArray,
+            defines: defineArray
+        };
         if (index === -1) {
-            configurations.push({
-                name: `${this.cppConfigName}`,
-                cStandard,
-                cppStandard,
-                compilerPath,
-                compilerArgs,
-                intelliSenseMode,
-                includePath: includeArray,
-                defines: defineArray
-            });
+            configurations.push(cppProperty);
         } else {
-            configurations[index]['compilerPath'] = compilerPath;
-            configurations[index]['compilerArgs'] = compilerArgs;
-            configurations[index]['cStandard'] = cStandard;
-            configurations[index]['cppStandard'] = cppStandard;
-            configurations[index]['intelliSenseMode'] = intelliSenseMode;
-            configurations[index]['includePath'] = includeArray;
-            configurations[index]['defines'] = defineArray;
+            configurations[index] = cppProperty;
         }
 
         const newConfig = JSON.stringify(cppProperties, undefined, 4);
@@ -146,80 +150,77 @@ export abstract class PTarget implements IView {
         }
         // 提前获取工作区目录，避免多次访问属性
         const workspaceDir = this.project.workspaceDir?.replace(/\\/g, '/') ?? ".";
-        const incList = includeArray.map((inc) => `-I${inc}`);
-        const defList = defineArray.map((def) => `-D${def}`);
 
-        // 生成 .clangd 文件内容    
-        const clangdConfig = {
-            CompileFlags: {
-                Add: [
-                    ...incList,
-                    ...defList,
-                    ...(compilerArgs ?? [])
-                ],
-                Compiler: compilerPath,
-            }
-        };
+        // 生成 compile_commands.json   
+        const commonArgs = [
+            `${this.compilerPath}`,
+            "-c",
+            "@compile_flags.txt"
+        ];
 
-        this.clangdContext = yaml.dump(clangdConfig, {
-            noRefs: true,
-            lineWidth: -1
+        this.fGroups.forEach(fg => {
+            fg.sources.forEach(f => {
+                const directory = f.file.dir.replace(/\\/g, '/').replace(workspaceDir, '').replace(/^\//, '');
+                const file = f.file.path.replace(/\\/g, '/').replace(workspaceDir, '').replace(/^\//, '');
+                const key = `${this.cppConfigName}${file}`;
+                const ci = compileCmds.findIndex(item => item.configuration === key);
+
+                const cmd = {
+                    configuration: key,
+                    directory,
+                    file,
+                    arguments: [...commonArgs, `${file}`, `-o`, `build/${this.cppConfigName}/${directory}/${f.file.noSuffixName}.o`]
+                };
+
+                if (ci === -1) {
+                    compileCmds.push(cmd);
+                } else {
+                    compileCmds[ci] = cmd;
+                }
+            });
         });
 
-        let files = this.fGroups.map(fg => fg.label).join(',');
-
-        const ci = compileCmds.findIndex(item => item.configuration === this.cppConfigName);
-        const workspacePath = workspaceDir.replace(workspaceDir, '.');
-
-
-        if (ci === -1) {
-            compileCmds.push({
-                configuration: `${this.cppConfigName}`,
-                directory: `${workspacePath}`,
-                file: `**/{${files}}/**/*.c`,
-                arguments: [
-                    `${compilerPath}`,
-                    ...incList,
-                    ...defList,
-                    ...(compilerArgs ?? []),
-                    `-std=${cStandard}`,
-                    "-c",
-                    "{file}",
-                    "-o",
-                    "build/{file_dir}/{file_base}.o"
-                ]
-            });
-        } else {
-            compileCmds[ci] = {
-                configuration: `${this.cppConfigName}`,
-                directory: workspacePath,
-                file: `**/{${files}}/**/*.c`,
-                arguments: [
-                    `${compilerPath}`,
-                    ...incList,
-                    ...defList,
-                    ...(compilerArgs ?? []),
-                    `-std=${cStandard}`,
-                    "-c",
-                    "{file}",
-                    "-o",
-                    "build/{file_dir}/{file_base}.o"
-                ]
-            };
-        }
 
         ccFile.write(JSON.stringify(compileCmds, undefined, 4));
 
     }
 
     updateClangdFile() {
-        const clangdFile = new File(`${this.project.workspaceDir}${File.sep}.clangd`);
+        const compilerArgs = this.toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
+        const includeArray = Array.from(this.includes);
+        const defineArray = Array.from(this.defines);
+        const incList = includeArray.map((inc) => `-I${/[\s:]/.test(inc) ? `"${inc.replace(/\\/g, '/')}"` : inc.replace(/\\/g, '/')}`);
+        const defList = defineArray.map((def) => `-D${def}`);
 
-        if (this.clangdContext) {
-            clangdFile.write(this.clangdContext);
+
+        // 生成 .clangd 文件内容    
+        const clangdContext = yaml.dump(
+            {
+                CompileFlags: {
+                    Add: [
+                        ...incList,
+                        ...defList,
+                        ...(compilerArgs ?? [])
+                    ],
+                    Compiler: this.compilerPath,
+                }
+            },
+            // 
+            {
+                noRefs: true,
+                lineWidth: -1
+            });
+
+        if (clangdContext) {
+            this.clangdFile.write(clangdContext);
         } else {
             this.project.logger.log(`[Error] .clangd file is empty`);
         }
+
+        // 生成 compile_flags.txt
+        const compileFlagsContent = `-std=${this.cStandard}\n` + incList.join('\n') + '\n'
+            + '-D__C51_ANSI_BOOL__\n' + defList.join('\n') + '\n';
+        this.compileFlagsFile.write(compileFlagsContent);
     }
 
     async load(): Promise<void> {
@@ -238,9 +239,9 @@ export abstract class PTarget implements IView {
         const sysIncludes = this.getSystemIncludes(this.targetDOM);
         const rteIncludes = this.getRTEIncludes(this.targetDOM, this.rteDom);
 
-        const cStandard = this.getCStandard(this.targetDOM);
-        const cppStandard = this.getCppStandard(this.targetDOM);
-        const intelliSenseMode = this.getIntelliSenseMode(this.targetDOM);
+        this.cStandard = this.getCStandard(this.targetDOM);
+        this.cppStandard = this.getCppStandard(this.targetDOM);
+        this.intelliSenseMode = this.getIntelliSenseMode(this.targetDOM).replace(/\\/g, '/');
 
         // set includes
         this.includes.clear();
@@ -367,12 +368,9 @@ export abstract class PTarget implements IView {
 
         }
 
-        const toolName = this.getToolName(this.targetDOM);
-        const compilerPath = ResourceManager.getInstance().getCompilerPath(this.getKeilPlatform(), toolName);
 
-        const compilerArgs = toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
 
-        this.updateCppProperties(cStandard, cppStandard, intelliSenseMode, compilerPath, compilerArgs);
+        this.updateCppProperties();
 
         this.updateSourceRefs();
     }

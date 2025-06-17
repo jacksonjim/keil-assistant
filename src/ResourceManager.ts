@@ -5,9 +5,9 @@ import * as ini from 'ini';
 let _instance: ResourceManager | undefined;
 
 const dirList: string[] = [
-    `${File.sep  }bin`,
-    `${File.sep  }res`,
-    `${File.sep  }res${  File.sep  }icons`
+    `${File.sep}bin`,
+    `${File.sep}res`,
+    `${File.sep}res${File.sep}icons`
 ];
 
 export class ResourceManager {
@@ -68,14 +68,18 @@ export class ResourceManager {
     }
 
     getCompilerPath(target: string, compiler: string | undefined): string | undefined {
-        if (compiler === "ARMCLANG") {
-            return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
+        switch (compiler) {
+            case "ARMCLANG":
+                return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
+            case "ARMCC":
+                return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCC${File.sep}bin${File.sep}armcc.exe`;
+            case "C51":
+                return `${this.getKeilRootDir(target)}${File.sep}C51${File.sep}bin${File.sep}C51.EXE`;
+            case "C251":
+                return `${this.getKeilRootDir(target)}${File.sep}C251${File.sep}bin${File.sep}C251.EXE`;
+            default:
+                return undefined;
         }
-        if (compiler === "ARMCC") {
-            return `${this.getKeilRootDir(target)}${File.sep}ARM${File.sep}ARMCC${File.sep}bin${File.sep}armcc.exe`;
-        }
-
-        return undefined;
     }
 
     getKeilRootDir(target: string): string {
@@ -89,7 +93,7 @@ export class ResourceManager {
         const homePath = this.getKeilRootDir(target);
 
         try {
-            const iniFile = new File(`${homePath + File.sep  }TOOLS.INI`);
+            const iniFile = new File(`${homePath + File.sep}TOOLS.INI`);
             const iniContent = iniFile.read();
             const parsed = ini.parse(iniContent);
 
@@ -98,7 +102,7 @@ export class ResourceManager {
             console.error("Error reading TOOL.INI file:", e);
         }
 
-        return path ?? `${homePath + File.sep  }ARM${  File.sep  }PACK`;
+        return path ?? `${homePath + File.sep}ARM${File.sep}PACK`;
     }
 
     private getHomePath(target: string): string | undefined {

@@ -65,8 +65,8 @@
     "test": "node ./out/test/runTest.js",
     "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
     "vscode:prepublish": "yarn run webpack",
-    "vsce-package": "vsce package --no-yarn",
-    "vsce-publish": "vsce publish --no-yarn",
+    "vsce-package": "vsce package --yarn",
+    "vsce-publish": "vsce publish --yarn",
     "deploy": "vsce publish --yarn"
   },
   "dependencies": {
@@ -86,7 +86,6 @@
     "chokidar": "^4.0.3",
     "oxlint": "^1.1.0",
     "fast-xml-parser": "^5.2.5",
-    "glob": "^11.0.2",
     "iconv-lite": "0.6.3",
     "mocha": "^11.6.0",
     "source-map-support": "^0.5.21",
