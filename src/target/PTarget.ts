@@ -207,11 +207,12 @@ export abstract class PTarget implements IView {
             {
                 noRefs: true,
                 lineWidth: -1,
-                flowLevel: 2,  // 在第二层嵌套使用流式样式（方括号）
             });
 
+        const diagnostics: string[] = [`\n\n---\nIf:\n  PathMatch: */CMSIS/.*\nDiagnostics:\n  Suppress: ["*", undeclared_var_use_suggest]`];
+
         if (clangdContext) {
-            this.clangdFile.write(clangdContext);
+            this.clangdFile.write(clangdContext + diagnostics);
         } else {
             this.project.logger.log(`[Error] .clangd file is empty`);
         }
