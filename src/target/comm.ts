@@ -1,5 +1,4 @@
 export type CompileCommand = {
-    configuration: string,
     directory: string | undefined,
     file: string | undefined,
     arguments: string[]
