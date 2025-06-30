@@ -33,7 +33,7 @@ export class KeilProject implements IView, KeilProjectInfo {
     };
 
     //-------------
-    workspaceDir: string | undefined;
+    workspaceDir: string;
     vscodeDir: File;
     uvprjFile: File;
     logger: Console;
@@ -57,7 +57,7 @@ export class KeilProject implements IView, KeilProjectInfo {
         this._event = new EventsEmitter();
         this.uVsionFileInfo = {} as UVisonInfo;
         this.targetList = [];
-        this.workspaceDir = workspace;
+        this.workspaceDir = `${workspace || ''}`;
         this.vscodeDir = new File(`${workspace + File.sep}.vscode`);
         this.vscodeDir.createDir();
         const logPath = `${this.vscodeDir.path + File.sep}keil-assistant.log`;

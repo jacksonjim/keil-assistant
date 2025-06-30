@@ -7,7 +7,7 @@ export type KeilProjectInfo = {
 
     vscodeDir: File;
 
-    workspaceDir: string | undefined;
+    workspaceDir: string;
 
     uvprjFile: File;
 

@@ -27,7 +27,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
 
     private prjList: Map<string, KeilProject>;
     private curActiveProject: KeilProject | undefined;
-    private workspacePath: string | undefined;
+    private workspacePath: string ;
 
     constructor(context: ExtensionContext, private channel: OutputChannel, private myStatusBarItem: StatusBarItem) {
         this.prjList = new Map();
@@ -35,6 +35,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         this.onDidChangeTreeData = this.viewEvent.event;
         context.subscriptions.push(window.registerTreeDataProvider('project', this));
         context.subscriptions.push(commands.registerCommand(this.itemClickCommand, (item: IView) => this.onItemClick(item)));
+        this.workspacePath = '';
     }
     private parseUvmpwFile(uvwPath: string, xmlParser: XMLParser): string[] {
         try {

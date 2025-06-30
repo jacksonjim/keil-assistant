@@ -1,6 +1,8 @@
 import { basename, dirname, extname, sep, delimiter, isAbsolute, relative } from 'path';
 import * as fs from 'fs';
 import * as crypto from 'crypto';
+import { pathToFileURL } from 'node:url';
+
 
 export class File {
 

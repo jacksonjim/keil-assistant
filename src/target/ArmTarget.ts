@@ -5,7 +5,7 @@ import { CmdLineHandler } from '../CmdLineHandler';
 import { execSync } from 'child_process';
 import { XMLParser } from 'fast-xml-parser';
 import { existsSync, statSync, readFileSync } from 'fs';
-import { resolve, join } from 'path';
+import { resolve, join, extname } from 'path';
 import type { UVisonInfo } from './PTarget';
 import { PTarget } from './PTarget';
 import { MacroHandler } from '../core/MacroHandler';
@@ -497,13 +497,13 @@ export class ArmTarget extends PTarget {
         if (keilRootDir.isDir()) {
             const toolName = target['uAC6'] === 1 ? 'ARMCLANG' : 'ARMCC';
             const incDir = new File(`${keilRootDir.path}${File.sep}ARM${File.sep}${toolName}${File.sep}include`);
-
+            const incPath = incDir.path.replace(/\\/g, '/');
             if (incDir.isDir()) {
-                return [incDir.path].concat(
-                    incDir.getList(File.emptyFilter).map((dir) => dir.path));
+                return [incPath].concat(
+                    incDir.getList(File.emptyFilter).map((dir) => dir.path.replace(/\\/g, '/')));
             }
 
-            return [incDir.path];
+            return [incPath];
         }
 
         return undefined;
@@ -537,14 +537,7 @@ export class ArmTarget extends PTarget {
             ignoreAttributes: false,
         };
 
-        // 统一路径处理方法
-        const addValidPath = (path: string) => {
-            const resolvedPath = resolve(path);
 
-            if (existsSync(resolvedPath)) {
-                incSet.add(resolvedPath);
-            }
-        };
 
         // 处理组件包含路径
         for (const component of componentsList) {
@@ -577,9 +570,9 @@ export class ArmTarget extends PTarget {
 
                         for (const file of files) {
                             if (file['@_category'] === 'include') {
-                                addValidPath(join(cRootDir, file['@_name']));
+                                this.addValidPath(incSet, join(cRootDir, file['@_name']));
                             } else if (file['@_category'] === 'header') {
-                                addValidPath(join(cRootDir, file['@_name'], ".."));
+                                this.addValidPath(incSet, join(cRootDir, file['@_name'], ".."));
                             }
                         }
                     }
@@ -592,7 +585,12 @@ export class ArmTarget extends PTarget {
 
         for (const file of rteFiles) {
             if (file['@_attr'] === 'config' && file['@_category'] === 'header') {
-                addValidPath(join(prjRoot, file.instance['#text']));
+                const headerPath = file.instance['#text'];
+                const headerExtName = extname(headerPath);
+                if (headerExtName === '.h' || headerExtName === '.hpp') {
+                    const headerDir = PTarget.getDirFromPath(headerPath);
+                    this.addValidPath(incSet, join(prjRoot, headerDir));
+                }
             }
         }
 
@@ -600,7 +598,7 @@ export class ArmTarget extends PTarget {
         for (const api of apiList) {
             for (const targetInfo of this.processArray(api.targetInfos?.targetInfo)) {
                 if (targetInfo['@_name'] === this.targetName) {
-                    addValidPath(join(prjRoot, "RTE", `_${this.targetName}`));
+                    this.addValidPath(incSet, join(prjRoot, "RTE", `_${this.targetName}`));
                 }
             }
         }
