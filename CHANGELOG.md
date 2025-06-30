@@ -2,6 +2,18 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+
+## [v1.9.16]
+
+- Optimized:
+  - Improved the stability of certain command executions to reduce the probability of unexpected errors.
+  - Enhanced project file parsing process for faster loading of large projects.
+- Fixed:
+  - Corrected RTE component path parsing errors in some scenarios.
+  - Resolved issues where Keil projects could not be recognized under specific paths.
+- Updated:
+  - Upgraded dependencies for better compatibility and security.
+
 ## [v1.9.15]
 
 - Fixed:
