@@ -56,7 +56,6 @@ export abstract class PTarget implements IView {
     private toolName: string;
     private compilerPath: string | undefined;
     private clangdFile: File;
-    private compileFlagsFile: File;
 
     constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
         this._event = new EventsEmitter();
@@ -77,7 +76,6 @@ export abstract class PTarget implements IView {
         this.cStandard = 'c11';
         this.cppStandard = 'c++17';
         this.clangdFile = new File(`${this.project.workspaceDir}${File.sep}.clangd`);
-        this.compileFlagsFile = new File(path.posix.join(this.project.workspaceDir!, 'compile_flags.txt'));
         this.uv4LogFile = new File(path.posix.join(this.project.vscodeDir.path, `${this.targetName}_uv4.log`));
     }
 
@@ -155,28 +153,20 @@ export abstract class PTarget implements IView {
         const commonArgs = [
             `${this.compilerPath}`,
             "-c",
-            "@compile_flags.txt"
         ];
 
         this.fGroups.forEach(fg => {
             fg.sources.forEach(f => {
                 const directory = f.file.dir.replace(/\\/g, '/').replace(workspaceDir, '').replace(/^\//, '');
                 const file = f.file.path.replace(/\\/g, '/').replace(workspaceDir, '').replace(/^\//, '');
-                const key = `${this.cppConfigName}${file}`;
-                const ci = compileCmds.findIndex(item => item.configuration === key);
 
                 const cmd = {
-                    configuration: key,
                     directory,
                     file,
                     arguments: [...commonArgs, `${file}`, `-o`, `build/${this.cppConfigName}/${directory}/${f.file.noSuffixName}.o`]
                 };
 
-                if (ci === -1) {
-                    compileCmds.push(cmd);
-                } else {
-                    compileCmds[ci] = cmd;
-                }
+                compileCmds.push(cmd);
             });
         });
 
@@ -186,10 +176,18 @@ export abstract class PTarget implements IView {
     }
 
     updateClangdFile() {
-        const compilerArgs = this.toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
+        const compilerArgs = ["--target=arm-none-eabi"];
         const includeArray = Array.from(this.includes);
         const defineArray = Array.from(this.defines);
-        const incList = includeArray.map((inc) => `-I${/[\s:]/.test(inc) ? `"${inc.replace(/\\/g, '/')}"` : inc.replace(/\\/g, '/')}`);
+        const workspaceDir = this.project.workspaceDir?.replace(/\\/g, '/');
+        const incList = includeArray.map((inc) => {
+            let path = /[\s:]/.test(inc) ? `${inc.replace(/\\/g, '/')}` : (workspaceDir + "/" + inc.replace(/\\/g, '/'));
+            if (path.length > 0) {
+                path = path.charAt(0).toLowerCase() + path.slice(1);
+            }
+            return `-I${path}`;
+        });
+
         const defList = defineArray.map((def) => `-D${def}`);
 
 
@@ -198,9 +196,9 @@ export abstract class PTarget implements IView {
             {
                 CompileFlags: {
                     Add: [
+                        ...compilerArgs,
                         ...incList,
                         ...defList,
-                        ...(compilerArgs ?? [])
                     ],
                     Compiler: this.compilerPath,
                 }
@@ -208,19 +206,16 @@ export abstract class PTarget implements IView {
             // 
             {
                 noRefs: true,
-                lineWidth: -1
+                lineWidth: -1,
             });
 
+        const diagnostics: string[] = [`\n\n---\nIf:\n  PathMatch: */CMSIS/.*\nDiagnostics:\n  Suppress: ["*", undeclared_var_use_suggest]`];
+
         if (clangdContext) {
-            this.clangdFile.write(clangdContext);
+            this.clangdFile.write(clangdContext + diagnostics);
         } else {
             this.project.logger.log(`[Error] .clangd file is empty`);
         }
-
-        // 生成 compile_flags.txt
-        const compileFlagsContent = `-std=${this.cStandard}\n` + incList.join('\n') + '\n'
-            + '-D__C51_ANSI_BOOL__\n' + defList.join('\n') + '\n';
-        this.compileFlagsFile.write(compileFlagsContent);
     }
 
     async load(): Promise<void> {
