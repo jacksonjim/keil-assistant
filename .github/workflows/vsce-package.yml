@@ -38,16 +38,10 @@ jobs:
       - name: Build package
         run: vsce package --yarn
 
-      - name: Set env RELEASE_VERSION
-        if: success()
-        run: 
-          echo "RELEASE_VERSION=${GITHUB_REF#refs/*/v}" >> $GITHUB_ENV
-          echo "VERSION=$(jq -r .version package.json)" >> $GITHUB_ENV
-
       - name: Extract Release Notes from CHANGELOG.md
         if: success()
         run: |
-          VERSION=${{ env.VERSION }}
+          VERSION=$(jq -r .version package.json)
           awk "/^## \[v${VERSION}\]/ {flag=1; next} /^## \[/ {flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
 
       - name: Create Release
@@ -57,7 +51,7 @@ jobs:
           body_path: RELEASE_BODY.md
           draft: false
           prerelease: false
-          files: keil-vscode-assistant-${{ env.VERSION }}.vsix
+          files: keil-vscode-assistant-$(jq -r .version package.json).vsix
           token: ${{ secrets.GITHUB_TOKEN }}
         
       - name: Publish to Marketplace
