@@ -68,7 +68,7 @@ jobs:
           body_path: RELEASE_BODY.md
           draft: false
           prerelease: ${{ steps.release-type.outputs.is_prerelease }}
-          files: keil-vscode-assistant-$(jq -r .version package.json).vsix
+          files: keil-vscode-assistant-*.vsix
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Publish to Marketplace
