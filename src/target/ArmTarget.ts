@@ -516,11 +516,20 @@ export class ArmTarget extends PTarget {
         return item ? [item] : [];
     }
 
-    protected getRTEIncludes(_target: any, rteDom: any): string[] | undefined {
+    protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
         if (!rteDom) return undefined;
         // 使用解构赋值和数组处理优化
         const { components, apis, files } = rteDom;
         // 强化数组标准化处理逻辑
+        const cpuinfo = target?.TargetOption?.TargetCommonOption?.Cpu ?? undefined;
+        const armMisc = (target?.uAC6 === 1) ? 'ARMCC6' : 'ARMCC';
+
+        // 正则表达式：提取Cortex-M*和可选的FPU信息
+        const match = cpuinfo?.match(/CPUTYPE\(["']Cortex-(M\d+)["']\)(?:\s+FPU(\d+))?/);
+
+        const rotsCondition = match
+            ? `CM${match[1].replace('M', '')}${match[2] === '2' ? '_FP' : ''}_${armMisc}`
+            : undefined;
 
 
         const componentsList = this.processArray(components?.component);
@@ -538,13 +547,18 @@ export class ArmTarget extends PTarget {
         };
 
 
-
         // 处理组件包含路径
         for (const component of componentsList) {
             const cPackage = component.package;
             const pkgVendor = cPackage['@_vendor'];
             const pkgName = cPackage['@_name'];
             const pkgVersion = cPackage['@_version'];
+            const cBundle = component['@_Cbundle'];
+            const cClass = component['@_Cclass'];
+            const condition = component['@_condition'];
+            const cVariant = component['@_Cvariant'];
+            const cVersion = component['@_Cversion'];
+            const cGroup = component['@_Cgroup'];
             const cRootDir = join(packsDir, pkgVendor, pkgName, pkgVersion);
             const pdscPath = join(cRootDir, `${component['@_Cvendor']}.${pkgName}.pdsc`);
 
@@ -558,14 +572,19 @@ export class ArmTarget extends PTarget {
             }
 
             const pdscDom = pdscCache.get(pdscPath);
+            if (!pdscDom) {
+                console.warn(`PDSC file not found or invalid: ${pdscPath}`);
+                continue;
+            }
 
             if (pdscDom?.package?.components) {
                 // 组件路径处理逻辑
                 const components = this.processArray(pdscDom.package.components.component);
+                const bundle = pdscDom.package.components.bundle;
 
                 for (const comp of components) {
-                    if (comp['@_Cgroup'] === component['@_Cgroup']
-                        && comp['@_condition'] === component['@_condition']) {
+                    if (comp['@_Cgroup'] === cGroup
+                        && comp['@_condition'] === condition) {
                         const files = this.processArray(comp.files?.file);
 
                         for (const file of files) {
@@ -574,6 +593,52 @@ export class ArmTarget extends PTarget {
                             } else if (file['@_category'] === 'header') {
                                 this.addValidPath(incSet, join(cRootDir, file['@_name'], ".."));
                             }
+                        }
+                    }
+                }
+                // 处理bundle路径
+                if (bundle && bundle['@_Cbundle'] === cBundle
+                    && bundle['@_Cclass'] === cClass && bundle['@_Cversion'] === cVersion) {
+                    const components = this.processArray(bundle.component);
+
+                    for (const comp of components) {
+                        if (comp['@_Cgroup'] === cGroup
+                            && comp['@_Cvariant'] === cVariant
+                            && comp['@_condition'] === condition) {
+                            const files = this.processArray(comp.files?.file);
+
+                            for (const file of files) {
+                                const fileCondition = file['@_condition'];
+                                if (fileCondition === undefined) {
+                                    if (file['@_category'] === 'include') {
+                                        this.addValidPath(incSet, join(cRootDir, file['@_name']));
+
+                                    }
+                                } else if (fileCondition === rotsCondition) {
+                                    if (file['@_category'] === 'include') {
+                                        this.addValidPath(incSet, join(cRootDir, file['@_name']));
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+                }
+            }
+            const apis = this.processArray(pdscDom?.package?.apis?.api);
+            for (const api of apis) {
+                const apiClass = api['@_Cclass'];
+                const apiGroup = api['@_Cgroup'];
+                if ((apiClass == 'CMSIS' && apiGroup === 'RTOS2') ||
+                    (apiClass == 'Device' && apiGroup === 'OS Tick')) {
+                    const apifiles = this.processArray(api.files.file);
+                    for (const af of apifiles) {
+                        const category = af['@_category'];
+                        const afPath = af['@_name'];
+                        const headerExtName = extname(afPath);
+                        if (category === 'header' && headerExtName === '.h' || headerExtName === '.hpp') {
+                            const headerDir = PTarget.getDirFromPath(afPath);
+                            this.addValidPath(incSet, join(cRootDir, headerDir));
                         }
                     }
                 }
