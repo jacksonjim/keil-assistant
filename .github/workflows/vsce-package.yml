@@ -13,19 +13,19 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest]
-    
+
     runs-on: ${{ matrix.os }}
     timeout-minutes: 15
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-          
+
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 20.x
-      
+
       - name: Install Yarn
         run: npm install -g yarn
 
@@ -35,8 +35,25 @@ jobs:
       - name: Install dependencies
         run: yarn install
 
+      - name: Set release type
+        id: release-type
+        run: |
+          TAG_NAME="${{ github.ref_name }}"
+          if [[ "$TAG_NAME" == *"pre"* ]]; then
+            echo "is_prerelease=true" >> $GITHUB_OUTPUT
+            echo "release_type=preRelease" >> $GITHUB_OUTPUT
+          else
+            echo "is_prerelease=false" >> $GITHUB_OUTPUT
+            echo "release_type=Release" >> $GITHUB_OUTPUT
+          fi
+
       - name: Build package
-        run: vsce package --yarn
+        run: |
+          if [[ "${{ steps.release-type.outputs.is_prerelease }}" == "true" ]]; then
+            vsce package --yarn --pre-release
+          else
+            vsce package --yarn
+          fi
 
       - name: Extract Release Notes from CHANGELOG.md
         if: success()
@@ -50,10 +67,15 @@ jobs:
         with:
           body_path: RELEASE_BODY.md
           draft: false
-          prerelease: false
+          prerelease: ${{ steps.release-type.outputs.is_prerelease }}
           files: keil-vscode-assistant-$(jq -r .version package.json).vsix
           token: ${{ secrets.GITHUB_TOKEN }}
-        
+
       - name: Publish to Marketplace
         if: success() && github.ref_type == 'tag'
-        run: npx vsce publish -p ${{ secrets.VSCE_PAT }}
+        run: |
+          if [[ "${{ steps.release-type.outputs.is_prerelease }}" == "true" ]]; then
+            npx vsce publish --pre-release -p ${{ secrets.VSCE_PAT }}
+          else
+            npx vsce publish -p ${{ secrets.VSCE_PAT }}
+          fi

@@ -66,6 +66,7 @@
     "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
     "vscode:prepublish": "yarn run webpack",
     "vsce-package": "vsce package --yarn",
+    "vsce-package-pre": "vsce package --pre-release   --yarn",
     "vsce-publish": "vsce publish --yarn",
     "deploy": "vsce publish --yarn"
   },
