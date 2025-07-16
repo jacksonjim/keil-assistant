@@ -2,6 +2,15 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.18]
+
+- Optimized:
+  - Enhanced RTE include handling logic, improved path processing functions to support null and root directory cases.
+- Updated:
+  - Upgraded oxlint and webpack dependency versions.
+  - Updated some dependencies to improve compatibility and security.
+- Fixed:
+  - Corrected GitHub workflow pre-release version handling issue.
 
 ## [v1.9.17]
 - Optimized:
