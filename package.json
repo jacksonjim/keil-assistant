@@ -84,14 +84,14 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
     "chokidar": "^4.0.3",
-    "oxlint": "^1.5.0",
+    "oxlint": "^1.6.0",
     "fast-xml-parser": "^5.2.5",
     "iconv-lite": "0.6.3",
     "mocha": "^11.7.1",
     "source-map-support": "^0.5.21",
     "ts-loader": "^9.5.2",
     "typescript": "^5.8.3",
-    "webpack": "^5.99.9",
+    "webpack": "^5.100.2",
     "webpack-cli": "^6.0.1"
   },
   "contributes": {
