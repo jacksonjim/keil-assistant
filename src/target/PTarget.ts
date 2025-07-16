@@ -229,8 +229,22 @@ export abstract class PTarget implements IView {
     }
 
     static getDirFromPath(filePath: string): string {
-        // 去除文件名，保留目录部分
-        return filePath.replace(/\\/g, '/').replace(/\/[^/]+$/, '');
+        if (!filePath) return '';
+
+        // 统一替换反斜杠为正斜杠
+        const normalized = filePath.replace(/\\/g, '/');
+
+        // 查找最后一个斜杠的位置
+        const lastSlashIndex = normalized.lastIndexOf('/');
+
+        // 根据斜杠位置返回目录部分
+        if (lastSlashIndex === -1) {
+            return ''; // 无斜杠（仅文件名）
+        } else if (lastSlashIndex === 0) {
+            return '/'; // 根目录下的文件（如 "/abc.txt"）
+        } else {
+            return normalized.substring(0, lastSlashIndex); // 普通目录路径
+        }
     }
 
     protected addValidPath(incSet: Set<string>, path: string) {

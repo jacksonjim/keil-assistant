@@ -519,7 +519,7 @@ export class ArmTarget extends PTarget {
     protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
         if (!rteDom) return undefined;
         // 使用解构赋值和数组处理优化
-        const { components, apis, files } = rteDom;
+        const { components, packages, files } = rteDom;
         // 强化数组标准化处理逻辑
         const cpuinfo = target?.TargetOption?.TargetCommonOption?.Cpu ?? undefined;
         const armMisc = (target?.uAC6 === 1) ? 'ARMCC6' : 'ARMCC';
@@ -533,7 +533,7 @@ export class ArmTarget extends PTarget {
 
 
         const componentsList = this.processArray(components?.component);
-        const apiList = this.processArray(apis?.api);
+        const packageList = this.processArray(packages?.package);
         const rteFiles = this.processArray(files?.file);
 
         const incSet = new Set<string>();
@@ -613,6 +613,12 @@ export class ArmTarget extends PTarget {
                                     if (file['@_category'] === 'include') {
                                         this.addValidPath(incSet, join(cRootDir, file['@_name']));
 
+                                    } else if (file['@_category'] === 'preIncludeGlobal') {
+                                        const headerExtName = extname(file['@_name']);
+                                        if ((headerExtName === '.h' || headerExtName === '.hpp')) {
+                                            const headerDir = PTarget.getDirFromPath(file['@_name']);
+                                            this.addValidPath(incSet, join(cRootDir, headerDir));
+                                        }
                                     }
                                 } else if (fileCondition === rotsCondition) {
                                     if (file['@_category'] === 'include') {
@@ -636,7 +642,7 @@ export class ArmTarget extends PTarget {
                         const category = af['@_category'];
                         const afPath = af['@_name'];
                         const headerExtName = extname(afPath);
-                        if (category === 'header' && headerExtName === '.h' || headerExtName === '.hpp') {
+                        if (category === 'header' && (headerExtName === '.h' || headerExtName === '.hpp')) {
                             const headerDir = PTarget.getDirFromPath(afPath);
                             this.addValidPath(incSet, join(cRootDir, headerDir));
                         }
@@ -649,7 +655,9 @@ export class ArmTarget extends PTarget {
         const prjRoot = resolve(this.project.uvprjFile.dir);
 
         for (const file of rteFiles) {
-            if (file['@_attr'] === 'config' && file['@_category'] === 'header') {
+            const file_category = file['@_category'];
+            if (file['@_attr'] === 'config' && (
+                file_category === 'header' || file_category === 'preIncludeGlobal')) {
                 const headerPath = file.instance['#text'];
                 const headerExtName = extname(headerPath);
                 if (headerExtName === '.h' || headerExtName === '.hpp') {
@@ -660,8 +668,9 @@ export class ArmTarget extends PTarget {
         }
 
         // 处理API路径
-        for (const api of apiList) {
-            for (const targetInfo of this.processArray(api.targetInfos?.targetInfo)) {
+        for (const rte_pkg of packageList) {
+            if(rte_pkg['@_name'] !== 'CMSIS') continue; // Ignore other packages
+            for (const targetInfo of this.processArray(rte_pkg.targetInfos?.targetInfo)) {
                 if (targetInfo['@_name'] === this.targetName) {
                     this.addValidPath(incSet, join(prjRoot, "RTE", `_${this.targetName}`));
                 }
