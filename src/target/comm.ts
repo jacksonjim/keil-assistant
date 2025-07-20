@@ -1,7 +1,7 @@
 export type CompileCommand = {
+    command: string | undefined,
     directory: string | undefined,
-    file: string | undefined,
-    arguments: string[]
+    file: string | undefined
 }
 
 export type CppProperty = {

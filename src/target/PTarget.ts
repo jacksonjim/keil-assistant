@@ -55,7 +55,6 @@ export abstract class PTarget implements IView {
     private intelliSenseMode: string | undefined;
     private toolName: string;
     private compilerPath: string | undefined;
-    private clangdFile: File;
     protected workspaceDir: string;
 
     constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
@@ -77,7 +76,6 @@ export abstract class PTarget implements IView {
         this.cStandard = 'c11';
         this.cppStandard = 'c++17';
         this.workspaceDir = `${prjInfo.workspaceDir?.replace(/\\/g, '/') ?? '.'}/`;
-        this.clangdFile = new File(path.posix.join(this.workspaceDir, '.clangd'));
         this.uv4LogFile = new File(path.posix.join(this.project.vscodeDir.path, `${this.targetName}_uv4.log`));
     }
 
@@ -99,22 +97,12 @@ export abstract class PTarget implements IView {
     private updateCppProperties() {
 
         const proFile = new File(path.posix.join(this.project.vscodeDir.path, 'c_cpp_properties.json'));
-        const ccFile = new File(path.posix.join(this.project.workspaceDir!, 'compile_commands.json'));
         const compilerArgs = this.toolName === 'ARMCLANG' ? ['--target=arm-arm-none-eabi'] : undefined;
         let cppProperties: any = { configurations: [], version: 4 };
 
         if (proFile.isFile()) {
             try {
                 cppProperties = JSON.parse(proFile.read());
-            } catch (error) {
-                this.project.logger.log(`[Error] c_cpp_properties.json parse error: ${error}`);
-            }
-        }
-
-        let compileCmds: CompileCommand[] = [];
-        if (ccFile.isFile() && ccFile.isExist()) {
-            try {
-                compileCmds = JSON.parse(ccFile.read());
             } catch (error) {
                 this.project.logger.log(`[Error] c_cpp_properties.json parse error: ${error}`);
             }
@@ -149,78 +137,61 @@ export abstract class PTarget implements IView {
             this.lastCppConfig = newConfig;
         }
         // 提前获取工作区目录，避免多次访问属性
+    }
 
-        // 生成 compile_commands.json   
-        const commonArgs = [
-            `${this.compilerPath}`,
-            "-c",
-        ];
+    updateCompileCommands() {
+        // 仅MDK支持生成
+        if (this.getKeilPlatform() !== 'MDK') {
+            return
+        }
 
+        const ccFile = new File(path.posix.join(this.workspaceDir, 'compile_commands.json'));
+
+        const compilerArgs = ["--target=arm-none-eabi", "-Wno-arm-asm-syntax"];
+        const defList = [...this.defines].map((def) => `-D${def}`);
+
+        /* 处理-I include参数 */
+        const incArgs = Array.from(this.includes).map((inc) => {
+            let incPath = /[\s:]/.test(inc) ? inc : path.posix.join(this.workspaceDir, inc);
+            
+            // 如果路径中有空格，则加引号
+            if (incPath.includes(' ')) {
+                return `-I"${incPath}"`;
+            }
+            return `-I${incPath}`;
+        }).join(' ');
+
+        let compileCmds: CompileCommand[] = [];
+
+        /* 根据源文件生成json列表 */
         this.fGroups.forEach(fg => {
             fg.sources.forEach(f => {
-                const directory = f.file.dir.replace(/\\/g, '/').replace(this.workspaceDir, '');
-                const file = f.file.path.replace(/\\/g, '/').replace(this.workspaceDir, '');
+                const file = path.posix.normalize(f.file.path);
+                const directory = path.posix.normalize(f.file.dir);
+                const command = [
+                    this.compilerPath,
+                    ...compilerArgs,
+                    ...defList,
+                    incArgs,
+                    '-c',
+                    file,
+                    '-o',
+                    file + '.o'
+                ].join(' ');
 
                 const cmd = {
+                    command,
                     directory,
-                    file,
-                    arguments: [...commonArgs, `${file}`, `-o`, `build/${this.cppConfigName}/${directory}/${f.file.noSuffixName}.o`]
+                    file
                 };
 
                 compileCmds.push(cmd);
             });
         });
 
-
         ccFile.write(JSON.stringify(compileCmds, undefined, 4));
-
     }
 
-    updateClangdFile() {
-        const compilerArgs = ["--target=arm-none-eabi"];
-        const includeArray = Array.from(this.includes);
-        const defineArray = Array.from(this.defines);
-        const incList = includeArray.map((inc) => {
-            let path = /[\s:]/.test(inc) ? `${inc.replace(/\\/g, '/')}` : (this.workspaceDir + inc.replace(/\\/g, '/'));
-            if (path.length > 0) {
-                path = path.charAt(0).toLowerCase() + path.slice(1);
-            }
-            // 如果路径中有空格，则加引号
-            if (path.includes(' ')) {
-                return `-I"${path}"`;
-            }
-            return `-I${path}`;
-        });
-
-        const defList = defineArray.map((def) => `-D${def}`);
-
-
-        // 生成 .clangd 文件内容    
-        const clangdContext = yaml.dump(
-            {
-                CompileFlags: {
-                    Add: [
-                        ...compilerArgs,
-                        ...incList,
-                        ...defList,
-                    ],
-                    Compiler: this.compilerPath,
-                }
-            },
-            // 
-            {
-                noRefs: true,
-                lineWidth: -1,
-            });
-
-        const diagnostics: string[] = [`\n\n---\nIf:\n  PathMatch: */CMSIS/.*\nDiagnostics:\n  Suppress: ["*", undeclared_var_use_suggest]`];
-
-        if (clangdContext) {
-            this.clangdFile.write(clangdContext + diagnostics);
-        } else {
-            this.project.logger.log(`[Error] .clangd file is empty`);
-        }
-    }
     static normalizeIncludePath(baseDir: string, incPath: string): string {
         // 规范化路径，去除工作区前缀，统一为正斜杠
         let absPath = normalize(baseDir + File.sep + incPath.trim());

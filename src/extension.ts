@@ -88,6 +88,9 @@ export function activate(context: ExtensionContext) {
         void prjExplorer.statusBarSwitchTargetByProject();
     }));
 
+    subscriber.push(commands.registerCommand('project.generateCompileCommandsJson',
+        (item: IView) => prjExplorer.getTarget(item)?.updateCompileCommands()
+    ));
 
     subscriber.push(myStatusBarItem);
 
