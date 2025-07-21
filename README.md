@@ -37,6 +37,7 @@ vscode 上的 Keil 辅助工具，与 c/c++ 插件配合使用.
 - 自动监视 keil 项目文件的变化，及时更新项目视图
 - 通过调用 Keil 命令行接口实现 编译，重新编译，烧录 keil 项目
 - 自动生成 c_cpp_properties.json 文件，使 C/C++ 插件的语法分析能正常进行
+- 支持调用命令生成 compile_commands.json（快捷键`ctrl+shift+p`, 搜索`生成compile_commands.json(仅MDK)`）
 
 ---
 ## 下载📌
