@@ -2,7 +2,7 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
-## [v1.9.19-pre]
+## [v1.9.19] - preRelease
 - Optimized:
   - Moved all `.clangd` configurations to `compile_commands.json`.
   - Removed `.clangd` file generation to allow users to customize it as needed.
