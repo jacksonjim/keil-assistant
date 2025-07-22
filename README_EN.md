@@ -24,6 +24,7 @@ It provides syntax highlighting, code snippets for Keil projects, and supports c
 - Automatically monitor keil project files for changes and keep project views up to date
 - Compile, recompile, and burn Keil projects by calling the Keil command-line interface
 - Automatically generate c_cpp_property.json for C/C++ plug-in
+- Supports generating compile_commands.json via command (shortcut key: ctrl+shift+p, search for Generate compile_commands.json(MDK only)).
 
 ***
 

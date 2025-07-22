@@ -206,6 +206,10 @@
           "light": "./res/icons/CopyToClipboard_16x_light.svg",
           "dark": "./res/icons/CopyToClipboard_16x_dark.svg"
         }
+      },
+      {
+        "command": "project.generateCompileCommandsJson",
+        "title": "%keil-assistant.contributes.commands.project-generateCompileCommandsJson%"
       }
     ],
     "menus": {
