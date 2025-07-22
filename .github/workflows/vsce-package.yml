@@ -24,7 +24,7 @@ jobs:
       - name: Install Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20.x
+          node-version: 24.x
 
       - name: Install Yarn
         run: npm install -g yarn
@@ -47,6 +47,25 @@ jobs:
             echo "release_type=Release" >> $GITHUB_OUTPUT
           fi
 
+      - name: Extract Release Notes from CHANGELOG.md
+        if: success()
+        run: |
+          # 提取对应版本的变更日志
+          if [[ "${{ steps.release-type.outputs.is_prerelease }}" == "true" ]]; then
+            VERSION=$(jq -r .version package.json)-pre
+          else
+            VERSION=$(jq -r .version package.json)
+          fi
+          awk "/^## \[v${VERSION}\]/ {flag=1; next} /^## \[/ {flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
+
+      - name: Add date to pre-release version
+        if: steps.release-type.outputs.is_prerelease == 'true'
+        run: |
+          DATE=$(date +%Y%m%d)
+          VERSION=$(jq -r .version package.json)
+          # 只在 pre-release 时追加日期
+          jq ".version = \"${VERSION}.${DATE}\"" package.json > package.json.tmp && mv package.json.tmp package.json
+
       - name: Build package
         run: |
           if [[ "${{ steps.release-type.outputs.is_prerelease }}" == "true" ]]; then
@@ -54,12 +73,6 @@ jobs:
           else
             vsce package --yarn
           fi
-
-      - name: Extract Release Notes from CHANGELOG.md
-        if: success()
-        run: |
-          VERSION=$(jq -r .version package.json)
-          awk "/^## \[v${VERSION}\]/ {flag=1; next} /^## \[/ {flag=0} flag" CHANGELOG.md > RELEASE_BODY.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
