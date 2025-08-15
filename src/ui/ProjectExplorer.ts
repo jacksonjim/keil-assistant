@@ -6,7 +6,8 @@ import type {
     OutputChannel,
     StatusBarItem
 } from "vscode";
-import { commands, EventEmitter, l10n,
+import {
+    commands, EventEmitter, l10n,
     TreeItem, TreeItemCollapsibleState, Uri, workspace, window
 } from "vscode";
 
@@ -27,7 +28,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
 
     private prjList: Map<string, KeilProject>;
     private curActiveProject: KeilProject | undefined;
-    private workspacePath: string ;
+    private workspacePath: string;
 
     constructor(context: ExtensionContext, private channel: OutputChannel, private myStatusBarItem: StatusBarItem) {
         this.prjList = new Map();
@@ -119,7 +120,7 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         // Filter out excluded files
         uvList = uvList.filter(path => !excludeList.includes(extname(path).toLowerCase()));
 
-        const  hasMultiplyProject = uvList.length > 1; //Multiply
+        const hasMultiplyProject = uvList.length > 1; //Multiply
 
         // Load each project file
         for (const uvPath of uvList) {
@@ -230,7 +231,12 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
     }
 
     async switchTargetByProject(view: IView) {
-        const prj = this.prjList.get(view.prjID);
+        let prj = undefined;
+        if (view !== undefined && view.prjID !== undefined) {
+            prj = this.prjList.get(view.prjID);
+        } else {
+            prj = this.curActiveProject;
+        }
 
         if (prj) {
             const tList = prj.getTargets();

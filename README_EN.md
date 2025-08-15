@@ -73,7 +73,7 @@ It provides syntax highlighting, code snippets for Keil projects, and supports c
 
 ### Common operations
 
-- **Compile and burn**：Three buttons are provided, one for compile, one for download, and one for recompile
+- **Compile(F7) and burn(F8)**：Three buttons are provided, one for compile, one for download, and one for recompile
  
  ![build](./res/preview/build.png)
 
@@ -97,7 +97,7 @@ It provides syntax highlighting, code snippets for Keil projects, and supports c
 
 >
 
-- **Switch keil Target**：Click the project toggle button to toggle between multiple Keil targets
+- **Switch keil Target(CTRL+T)**：Click the project toggle button to toggle between multiple Keil targets
  
  ![active_target](./res/preview/active_target.png)
 

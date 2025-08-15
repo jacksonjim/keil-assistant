@@ -36,8 +36,6 @@ export function activate(context: ExtensionContext) {
     const prjExplorer = new ProjectExplorer(context, channel, myStatusBarItem);
     const subscriber = context.subscriptions;
 
-    const projectSwitchCommandId = 'project.switch';
-
     subscriber.push(commands.registerCommand('explorer.open', async () => {
         const uri = await window.showOpenDialog({
             openLabel: l10n.t('Open keil uVision project'),
@@ -80,7 +78,7 @@ export function activate(context: ExtensionContext) {
 
     subscriber.push(commands.registerCommand('item.copyValue', (item: IView) => env.clipboard.writeText(item.tooltip ?? '')));
 
-    subscriber.push(commands.registerCommand(projectSwitchCommandId, (item: IView) => prjExplorer.switchTargetByProject(item)));
+    subscriber.push(commands.registerCommand('project.switch', (item: IView) => prjExplorer.switchTargetByProject(item)));
 
     subscriber.push(commands.registerCommand('project.active', (item: IView) => prjExplorer.activeProject(item)));
 

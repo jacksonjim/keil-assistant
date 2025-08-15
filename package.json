@@ -258,15 +258,19 @@
     "keybindings": [
       {
         "command": "project.build",
-        "key": "f7"
+        "key": "F7"
       },
       {
         "command": "project.rebuild",
-        "key": "ctrl+alt+f7"
+        "key": "ALT+F7"
       },
       {
         "command": "project.download",
-        "key": "ctrl+alt+d"
+        "key": "F8"
+      },
+      {
+        "command": "project.switch",
+        "key": "CTRL+T"
       }
     ],
     "snippets": [
