@@ -21,30 +21,10 @@
 			],
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceFolder}/dist/**"
+				"${workspaceFolder}/out/test/**/*.js"
 			],
 			"preLaunchTask": "watch"
 			// "preLaunchTask": "watch"
-		},
-		{
-			"name": "Run Extension-Select Workspace",
-			"type": "extensionHost",
-			"request": "launch",
-			"args": [
-				"--no-sandbox",
-				"--disable-updates",
-				"--skip-welcome",
-				"--skip-release-notes",
-				"--disable-workspace-trust",
-				"--extensionDevelopmentPath=${workspaceFolder}",
-				"${input:pickWorkspace}"
-			],
-			"sourceMaps": true,
-			"outFiles": [
-				"${workspaceFolder}/**/*.js",
-				"!**/node_modules/**"
-			],
-			"preLaunchTask": "watch"
 		},
 		{
 			"name": "Extension Tests",
@@ -67,7 +47,7 @@
 			],
 			"sourceMaps": true,
 			"outFiles": [
-				"${workspaceFolder}/dist/**"
+				"${workspaceFolder}/out/test/**/*.js"
 			],
 			"preLaunchTask": "watch"
 		},

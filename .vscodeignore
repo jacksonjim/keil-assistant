@@ -1,4 +1,11 @@
 # ignore vscode settings for extension development
+.vscode
+node_modules
+out/
+src/
+tsconfig.json
+webpack.config.js
+esbuild.ts
 .vscode/**
 .vscode-test/**
 .github/**
@@ -11,7 +18,6 @@ obj/**
 tools/**
 notices/**
 test/**
-src/**
 
 # ignore .js files that are webpacked or only used for development
 out/src/**

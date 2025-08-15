@@ -16,7 +16,7 @@
 		{
 			"label": "watch",
 			"type": "npm",
-			"script": "watch",
+			"script": "watch:tsc",
 			"problemMatcher":"$tsc-watch",
 			"isBackground": true,
 			"presentation": {

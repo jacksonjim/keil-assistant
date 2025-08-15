@@ -34,7 +34,7 @@
     "Extension Packs"
   ],
   "activationEvents": [],
-  "main": "./dist/src/extension.js",
+  "main": "./dist/extension.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/jacksonjim/keil-assistant.git"
@@ -50,21 +50,21 @@
   ],
   "scripts": {
     "setup": "yarn install",
-    "build": "webpack --mode development",
-    "build:prod": "webpack --mode production",
-    "compile": "webpack --mode production",
-    "compile-watch": "webpack --mode production --watch --progress",
-    "compile-dev-watch": "webpack --mode development --watch --progress",
+    "compile": "yarn check-types && ts-node esbuild.ts",
+    "check-types": "tsc --noEmit",
     "compile-unit-test": "tsc --build test.tsconfig.json",
     "compile-watch-unit-test": "tsc --build test.tsconfig.json --watch",
-    "watch": "tsc --build tsconfig.json --watch",
+    "watch": "yarn watch:esbuild & yarn watch:tsc",
+    "watch:esbuild": "ts-node esbuild.ts --watch",
+    "watch-tsc": "tsc --build tsconfig.json --watch",
+    "watch:tsc": "tsc --noEmit --watch --project tsconfig.json",
     "compile-tests": "tsc -p test.tsconfig.json --outDir out",
     "watch-tests": "tsc -p test.tsconfig.json --watch --outDir out",
     "pretest": "yarn run compile-tests && yarn run compile",
     "lint": "oxlint .",
-    "test": "node ./out/test/runTest.js",
-    "webpack": "yarn install && tsc --build tsconfig.json && webpack --mode production",
-    "vscode:prepublish": "yarn run webpack",
+    "test": "ts-node ./out/test/runTest.js",
+    "package": "yarn run check-types && ts-node esbuild.ts --production",
+    "vscode:prepublish": "yarn run package",
     "vsce-package": "vsce package --yarn",
     "vsce-package-pre": "vsce package --pre-release --yarn",
     "vsce-publish": "vsce publish --yarn",
@@ -87,12 +87,11 @@
     "fast-xml-parser": "^5.2.5",
     "iconv-lite": "0.6.3",
     "mocha": "^11.7.1",
-    "oxlint": "^1.7.0",
+    "oxlint": "^1.11.2",
     "source-map-support": "^0.5.21",
-    "ts-loader": "^9.5.2",
-    "typescript": "^5.8.3",
-    "webpack": "^5.100.2",
-    "webpack-cli": "^6.0.1"
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.2",
+    "esbuild": "^0.25.9"
   },
   "contributes": {
     "viewsWelcome": [
