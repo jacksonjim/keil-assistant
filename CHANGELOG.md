@@ -2,6 +2,12 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.21]
+
+- Updated:
+  - Added keyboard shortcut hints to common operations section in README.md and README_EN.md
+  - Added shortcut key indicators in operation titles: "Compile(F7) and Download(F8)", "Switch Keil Target(CTRL+T)"
+
 ## [v1.9.20]
 
 - Updated:
