@@ -2,7 +2,7 @@
   "name": "keil-vscode-assistant",
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "1.9.19",
+  "version": "1.9.20",
   "publisher": "jacksonjim",
   "icon": "res/icons/icon.png",
   "author": "jacksonjim <jacksonjim@foxmail.com>",
