@@ -2,7 +2,28 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.20]
+
+- Updated:
+
+  - Bumped version number from 1.9.19 to 1.9.20 in `package.json`
+  - This is a routine version increment, no specific features or fixes included
+
+- Build System:
+
+  - Refactored project build configuration
+  - Replaced webpack with esbuild as the build tool
+  - Updated .vscode configuration, adjusted debug and task settings
+  - Added `esbuild.ts` file with esbuild build configuration
+  - Modified package.json, updated build and test scripts
+  - Removed `webpack.config.mjs` file
+
+- Dependency Updates:
+  - Updated VSCE installation command, using `@vscode/vsce` instead of `vsce`
+  - Fixed dependency order to ensure oxlint is in the correct position
+
 ## [v1.9.19] - preRelease
+
 - Optimized:
   - Moved all `.clangd` configurations to `compile_commands.json`.
   - Removed `.clangd` file generation to allow users to customize it as needed.
@@ -19,6 +40,7 @@ All notable changes to the "keil-assistant" extension will be documented in this
   - Corrected GitHub workflow pre-release version handling issue.
 
 ## [v1.9.17]
+
 - Optimized:
   - Improved the stability of certain command executions to reduce the probability of unexpected errors.
   - Enhanced project file parsing process for faster loading of large projects.
@@ -27,7 +49,8 @@ All notable changes to the "keil-assistant" extension will be documented in this
   - Resolved issues where Keil projects could not be recognized under specific paths.
 - Updated:
   - Upgraded dependencies for better compatibility and security.
-  - 
+  -
+
 ## [v1.9.16]
 
 - Optimized:
@@ -47,9 +70,11 @@ All notable changes to the "keil-assistant" extension will be documented in this
 ## [v1.9.14]
 
 - Updated:
+
   - Upgraded dependencies: `@eslint/js`, `@typescript-eslint/eslint-plugin`, `@typescript-eslint/parser`, `eslint`, and `fast-xml-parser` to their latest versions for improved performance and compatibility.
 
 - Optimized:
+
   - Enhanced `.clangd` file generation logic to ensure better configuration and usability.
 
 - Removed:
@@ -58,12 +83,14 @@ All notable changes to the "keil-assistant" extension will be documented in this
 ## [v1.9.13]
 
 - Fixed:
+
   - **RTE Components Iteration Error**  
     Resolved "TypeError: components is not iterable" in ArmTarget by implementing array normalization for PDSC parsing
   - **Cache Initialization Issue**  
     Fixed undefined cache reference in RTE includes processing through proper WeakMap initialization
 
 - Optimized:
+
   - **Array Processing**  
     Enhanced XML node handling with unified processArray utility across component/files parsing
   - **Memory Efficiency**  
@@ -76,6 +103,7 @@ All notable changes to the "keil-assistant" extension will be documented in this
     Added verbose logging for RTE component processing when debug mode is enabled
 
 ---
+
 ## [v1.9.12]
 
 - Fixed:
