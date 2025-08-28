@@ -4,6 +4,10 @@ All notable changes to the "keil-assistant" extension will be documented in this
 
 ## [v1.9.21]
 
+- Fixed:
+  - Resolved issue where ARMCLANG macros were not properly retrieved due to incorrect command line parameter formatting
+  - Fixed debugging task configuration to ensure compilation occurs on every restart
+
 - Updated:
   - Added keyboard shortcut hints to common operations section in README.md and README_EN.md
   - Added shortcut key indicators in operation titles: "Compile(F7) and Download(F8)", "Switch Keil Target(CTRL+T)"

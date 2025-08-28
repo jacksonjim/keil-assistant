@@ -23,8 +23,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/test/**/*.js"
 			],
-			"preLaunchTask": "watch"
-			// "preLaunchTask": "watch"
+			"preLaunchTask": "build"
 		},
 		{
 			"name": "Extension Tests",
@@ -49,7 +48,7 @@
 			"outFiles": [
 				"${workspaceFolder}/out/test/**/*.js"
 			],
-			"preLaunchTask": "watch"
+			"preLaunchTask": "build"
 		},
 		{
 			"name": "MochaTest",

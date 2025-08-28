@@ -6,6 +6,31 @@ import { ResourceManager } from '../ResourceManager';
 
 export class C51Target extends PTarget {
 
+    private static readonly macros: string[] = [
+        '__C51__',
+        '__VSCODE_C51__',
+        'reentrant=',
+        'compact=',
+        'small=',
+        'large=',
+        'data=',
+        'idata=',
+        'pdata=',
+        'bdata=',
+        'xdata=',
+        'code=',
+        'bit=char',
+        'sbit=char',
+        'sfr=char',
+        'sfr16=int',
+        'sfr32=int',
+        'interrupt=',
+        'using=',
+        '_at_=',
+        '_priority_=',
+        '_task_='
+    ];
+
     protected checkProject(target: any): Error | undefined {
         const targetOption = target['TargetOption'];
 
@@ -38,44 +63,21 @@ export class C51Target extends PTarget {
         return undefined;
     }
 
-    protected getSysDefines(_target: any): string[] {
-        return [
-            '__C51__',
-            '__VSCODE_C51__',
-            'reentrant=',
-            'compact=',
-            'small=',
-            'large=',
-            'data=',
-            'idata=',
-            'pdata=',
-            'bdata=',
-            'xdata=',
-            'code=',
-            'bit=char',
-            'sbit=char',
-            'sfr=char',
-            'sfr16=int',
-            'sfr32=int',
-            'interrupt=',
-            'using=',
-            '_at_=',
-            '_priority_=',
-            '_task_='
-        ];
+    protected getSysDefines(_target: any) {
+        C51Target.macros.forEach(define =>
+            this.defines.add(define)
+        );
     }
 
-    protected getRteDefines(target: any): string[] {
+    protected getRteDefines(target: any) {
         if (target) {
             const components = target['components']['component'];
             const apis = target['apis']['api'];
 
             if (Array.isArray(components) || Array.isArray(apis)) {
-                return ["_RTE_"];
+                this.defines.add("_RTE_");
             }
         }
-
-        return [];
     }
 
     protected getSystemIncludes(target: any): string[] | undefined {
@@ -109,10 +111,15 @@ export class C51Target extends PTarget {
         return target51['VariousControls']['IncludePath'];
     }
 
-    protected getDefineString(target: any): string {
+    protected getDefineString(target: any) {
         const target51 = target['TargetOption']['Target51']['C51'];
+        const macros: string = target51['VariousControls']['Define'];
 
-        return target51['VariousControls']['Define'];
+        macros?.split(/,|\s+/).forEach((define) => {
+            if (define.trim() !== '') {
+                this.defines.add(define);
+            }
+        });
     }
 
     protected getGroups(target: any): any[] {

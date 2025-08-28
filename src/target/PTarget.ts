@@ -153,7 +153,7 @@ export abstract class PTarget implements IView {
         /* 处理-I include参数 */
         const incArgs = Array.from(this.includes).map((inc) => {
             let incPath = /[\s:]/.test(inc) ? inc : path.posix.join(this.workspaceDir, inc);
-            
+
             // 如果路径中有空格，则加引号
             if (incPath.includes(' ')) {
                 return `-I"${incPath}"`;
@@ -238,9 +238,11 @@ export abstract class PTarget implements IView {
             console.error(`check project failed, ${err}`);
             throw err;
         }
+        // set defines
+        this.defines.clear();
 
+        this.getDefineString(this.targetDOM);
         const incListStr: string = this.getIncString(this.targetDOM);
-        const defineListStr: string = this.getDefineString(this.targetDOM);
         const _groups: any = this.getGroups(this.targetDOM);
         const sysIncludes = this.getSystemIncludes(this.targetDOM);
         const rteIncludes = this.getRTEIncludes(this.targetDOM, this.rteDom);
@@ -286,25 +288,11 @@ export abstract class PTarget implements IView {
             filePath => addInclude(this.project.toAbsolutePath(filePath))
         );
 
-        // set defines
-        this.defines.clear();
-
-        // add user macros
-        defineListStr.split(/,|\s+/).forEach((define) => {
-            if (define.trim() !== '') {
-                this.defines.add(define);
-            }
-        });
-
         // RTE macros
-        this.getRteDefines(this.rteDom).forEach((define) => {
-            this.defines.add(define);
-        });
+        this.getRteDefines(this.rteDom);
 
         // add system macros
-        this.getSysDefines(this.targetDOM).forEach((define) => {
-            this.defines.add(define);
-        });
+        this.getSysDefines(this.targetDOM);
 
         // set file groups
         this.fGroups = [];
@@ -529,9 +517,9 @@ export abstract class PTarget implements IView {
     protected abstract checkProject(target: any): Error | undefined;
 
     protected abstract getIncString(target: any): string;
-    protected abstract getDefineString(target: any): string;
-    protected abstract getSysDefines(target: any): string[];
-    protected abstract getRteDefines(target: any): string[];
+    protected abstract getDefineString(target: any): void;
+    protected abstract getSysDefines(target: any): void;
+    protected abstract getRteDefines(target: any): void;
     protected abstract getGroups(target: any): any[];
     protected abstract getSystemIncludes(target: any): string[] | undefined;
     protected abstract getRTEIncludes(target: any, rteDom: any): string[] | undefined;
