@@ -139,6 +139,29 @@ export abstract class PTarget implements IView {
         // 提前获取工作区目录，避免多次访问属性
     }
 
+    private getArmccVersion(): string {
+    try {
+    if (this.toolName === 'ARMCC' && this.compilerPath) {
+        // 执行 armcc --version 命令获取版本信息
+        const output = execSync(`"${this.compilerPath}" --version`, { encoding: 'utf8' });
+
+        // 解析版本号，ARMCC 版本格式通常是 "ARM Compiler 5.06 update 7 (build 960)"
+        const versionMatch = output.match(/ARM Compiler (\d+)\.(\d+)(?: update (\d+))?/);
+        if (versionMatch) {
+            const major = versionMatch[1];
+            const minor = versionMatch[2];
+            const update = versionMatch[3] || '0';
+            // 将版本号转换为 __ARMCC_VERSION 格式 (major * 1000000 + minor * 10000 + update * 100)
+            const versionNumber = parseInt(major) * 1000000 + parseInt(minor) * 10000 + parseInt(update) * 100;
+            return versionNumber.toString();
+        }
+    }
+    } catch (error) {
+        console.warn('Failed to get ARMCC version:', error);
+    }
+    return '5000000'; // 默认版本号
+    }
+
     updateCompileCommands() {
         // 仅MDK支持生成
         if (this.getKeilPlatform() !== 'MDK') {
@@ -149,6 +172,12 @@ export abstract class PTarget implements IView {
 
         const compilerArgs = ["--target=arm-none-eabi", "-Wno-arm-asm-syntax"];
         const defList = [...this.defines].map((def) => `-D${def}`);
+
+        // 如果是 ARMCC 编译器，添加 __ARMCC_VERSION 宏
+        if (this.toolName === 'ARMCC') {
+            const armccVersion = this.getArmccVersion();
+            defList.push(`-D__ARMCC_VERSION=${armccVersion}`);
+        }
 
         /* 处理-I include参数 */
         const incArgs = Array.from(this.includes).map((inc) => {
