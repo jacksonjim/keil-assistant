@@ -2,6 +2,16 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.22]
+
+- Refactored:
+  - Optimized ARMCC version retrieval logic
+  - Improved version number parsing logic for better code readability
+  - Added error catching to enhance code robustness
+
+- Feature:
+  - Added _ARMCC_VERSION macro when generating compile_commands
+
 ## [v1.9.21]
 
 - Fixed:
