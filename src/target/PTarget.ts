@@ -9,7 +9,7 @@ import { normalize, resolve } from 'path';
 import { ResourceManager } from "../ResourceManager";
 import { Source } from "../core/Source";
 import { closeSync, openSync, readSync, statSync, watchFile, writeFileSync } from "fs";
-import { spawn } from "child_process";
+import { execSync, spawn } from "child_process";
 import { decode } from "iconv-lite";
 import * as yaml from 'js-yaml';
 import { CompileCommand, CppProperty } from "./comm";
@@ -140,26 +140,26 @@ export abstract class PTarget implements IView {
     }
 
     private getArmccVersion(): string {
-    try {
-    if (this.toolName === 'ARMCC' && this.compilerPath) {
-        // 执行 armcc --version 命令获取版本信息
-        const output = execSync(`"${this.compilerPath}" --version`, { encoding: 'utf8' });
+        try {
+            if (this.toolName === 'ARMCC' && this.compilerPath) {
+                // 执行 armcc --version 命令获取版本信息
+                const output = execSync(`"${this.compilerPath}" --version`, { encoding: 'utf8' });
 
-        // 解析版本号，ARMCC 版本格式通常是 "ARM Compiler 5.06 update 7 (build 960)"
-        const versionMatch = output.match(/ARM Compiler (\d+)\.(\d+)(?: update (\d+))?/);
-        if (versionMatch) {
-            const major = versionMatch[1];
-            const minor = versionMatch[2];
-            const update = versionMatch[3] || '0';
-            // 将版本号转换为 __ARMCC_VERSION 格式 (major * 1000000 + minor * 10000 + update * 100)
-            const versionNumber = parseInt(major) * 1000000 + parseInt(minor) * 10000 + parseInt(update) * 100;
-            return versionNumber.toString();
+                // 解析版本号，ARMCC 版本格式通常是 "ARM Compiler 5.06 update 7 (build 960)"
+                const versionMatch = output.match(/ARM Compiler (\d+)\.(\d+)(?: update (\d+))?/);
+                if (versionMatch) {
+                    const major = versionMatch[1];
+                    const minor = versionMatch[2];
+                    const update = versionMatch[3] || '0';
+                    // 将版本号转换为 __ARMCC_VERSION 格式 (major * 1000000 + minor * 10000 + update * 100)
+                    const versionNumber = parseInt(major) * 1000000 + parseInt(minor) * 10000 + parseInt(update) * 100;
+                    return versionNumber.toString();
+                }
+            }
+        } catch (error) {
+            console.warn('Failed to get ARMCC version:', error);
         }
-    }
-    } catch (error) {
-        console.warn('Failed to get ARMCC version:', error);
-    }
-    return '5000000'; // 默认版本号
+        return '5000000'; // 默认版本号
     }
 
     updateCompileCommands() {
