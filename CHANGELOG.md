@@ -12,6 +12,9 @@ All notable changes to the "keil-assistant" extension will be documented in this
 - Feature:
   - Added _ARMCC_VERSION macro when generating compile_commands
 
+- Fixed:
+  - #87:Updated v6Langp property name in ArmTarget for consistency
+
 ## [v1.9.21]
 
 - Fixed:

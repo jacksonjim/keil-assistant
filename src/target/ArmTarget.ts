@@ -843,8 +843,8 @@ export class ArmTarget extends PTarget {
          * 9: gnu++17  → 对应uGnu++17
          */
         const dat = target['TargetOption']['TargetArmAds']['Cads'];
-        const v6Langp = dat['v6Langp'];
-
+        const v6Langp = dat['v6LangP'];
+        
         switch (v6Langp) {
             case 1:
                 return 'c++98';
