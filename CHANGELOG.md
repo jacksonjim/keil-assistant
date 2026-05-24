@@ -2,6 +2,42 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.25]
+
+### Fixed
+
+- #92 Fixed issue excludeList bug
+- #94 Fixed issue where ARMCC5 macros were not being retrieved correctly
+
+- **ProjectExplorer**: Fixed project file exclusion list not working correctly
+  - Changed file matching logic from `extname()` to `basename()` for proper filename comparison
+  - Added case-insensitive comparison to ensure consistent behavior across platforms
+  - Added empty list check to avoid unnecessary filtering operations
+  - Resolved issue where configured exclude patterns (e.g., "template.uvproj") were not being applied
+
+- **ArmTarget**: Fixed incorrect IntelliSense mode for ARMCC5 (AC5) compiler
+  - Changed IntelliSense mode from `${default}` to `gcc-arm` for AC5 projects
+  - Prevents Windows default resolution to `msvc-x64` which caused incorrect code parsing
+  - Improves IntelliSense performance and accuracy for ARM CC5 projects
+  - Addresses GitHub issue #94
+
+- **C51Target**: Updated IntelliSense mode for 8051 architecture
+  - Changed IntelliSense mode from `${default}` to `gcc-x86`
+  - Provides better syntax parsing compatibility for C51 compiler
+  - Aligns with community best practices for 8051 development in VS Code
+
+- **C251Target**: Updated IntelliSense mode for 8051 architecture
+  - Changed IntelliSense mode from `${default}` to `gcc-x86`
+  - Ensures consistent IntelliSense behavior across C51/C251 toolchains
+
+### Optimized
+
+- **ArmTarget**: Improved code quality and robustness in multiple methods
+  - Enhanced `gnuParseRefLines()`: Added empty line validation, improved variable naming, and safer string operations
+  - Refactored `getArmClangMacroList()`: Extracted default macros as constant, improved error handling with detailed logging
+  - Optimized `getSystemIncludes()`: Fixed null pointer risks, removed redundant semicolons, and improved type safety
+  - Enhanced `extractMacros()`: Unified comment language to English, extracted comment removal logic into separate method
+
 ## [v1.9.24]
 
 ### Fixed
