@@ -137,6 +137,6 @@ export class C51Target extends PTarget {
         return 'c++17';
     }
     protected getIntelliSenseMode(_target: any): string {
-        return '${default}';//'gcc-x86';
+        return 'gcc-x86';
     }
 }
