@@ -1,6 +1,6 @@
 import { XMLParser } from "fast-xml-parser";
 import { statSync, readFileSync, readdirSync } from "fs";
-import { dirname, extname, join, normalize, resolve } from "path";
+import { dirname, extname, join, normalize, resolve, basename } from "path";
 import type {
     Event, ExtensionContext, ProviderResult, TreeDataProvider,
     OutputChannel,
@@ -117,8 +117,13 @@ export class ProjectExplorer implements TreeDataProvider<IView> {
         // Add additional project file locations
         uvList.push(...ResourceManager.getInstance().getProjectFileLocationList());
 
-        // Filter out excluded files
-        uvList = uvList.filter(path => !excludeList.includes(extname(path).toLowerCase()));
+        // Filter out excluded files by comparing basename (filename) with exclude list
+        if (excludeList.length > 0) {
+            uvList = uvList.filter(path => {
+                const fileName = basename(path).toLowerCase();
+                return !excludeList.some(exclude => exclude.toLowerCase() === fileName);
+            });
+        }
 
         const hasMultiplyProject = uvList.length > 1; //Multiply
 

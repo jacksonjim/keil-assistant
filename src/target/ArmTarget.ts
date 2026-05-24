@@ -165,22 +165,29 @@ export class ArmTarget extends PTarget {
     }
 
     private gnuParseRefLines(lines: string[]): string[] {
-
         const resultList = new Set<string>();
 
         for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-            const _line = lines[lineIndex];
+            const rawLine = lines[lineIndex];
+            
+            // Skip empty or whitespace-only lines
+            if (!rawLine || !rawLine.trim()) {
+                continue;
+            }
 
-            const line = _line[_line.length - 1] === '\\' ? _line.substring(0, _line.length - 1) : _line; // remove char '\'
-            const subLines = line.trim().split(/(?<![\\:]) /);
+            // Remove trailing backslash (line continuation character)
+            const trimmedLine = rawLine.endsWith('\\') ? rawLine.slice(0, -1) : rawLine;
+            
+            // Split by spaces that are not preceded by backslash or colon
+            const subLines = trimmedLine.trim().split(/(?<![\\:]) /);
 
-            // Skip the first sub line for the first line only
+            // Skip the first sub-line for the first line only
             const startIndex = (lineIndex === 0) ? 1 : 0;
 
             for (let i = startIndex; i < subLines.length; i++) {
                 const item = subLines[i].trim().replace(/\\ /g, " ");
 
-                if (item) { // Ensure the item is not empty
+                if (item) {
                     resultList.add(item);
                 }
             }
@@ -254,33 +261,50 @@ export class ArmTarget extends PTarget {
     }
 
     private getArmClangMacroList(armClangPath: string, armClangCpu?: string): string[] {
+        // Default macros when armclang execution fails
+        const DEFAULT_MACROS = ['__GNUC__=4', '__GNUC_MINOR__=2', '__GNUC_PATCHLEVEL__=1'];
+        
         try {
-            // armclang.exe --target=arm-arm-none-eabi -E -dM -xc - < nul
+            // Build command arguments safely
             const cmdArgs = ['--target=arm-arm-none-eabi'];
+            
             if (armClangCpu) {
                 cmdArgs.push(armClangCpu);
             }
+            
             cmdArgs.push('-E', '-dM', '-xc', '-', '<', 'nul');
 
-            const cmdLine = `${CmdLineHandler.quoteString(armClangPath, '"')} ${cmdArgs.join(' ')}`;
+            // Construct command line with proper quoting
+            const quotedPath = CmdLineHandler.quoteString(armClangPath, '"');
+            const cmdLine = `${quotedPath} ${cmdArgs.join(' ')}`;
 
-            const lines = execSync(cmdLine).toString().split(/\r\n|\n/);
-            const resList: string[] = [];
+            // Execute command and parse output
+            const output = execSync(cmdLine).toString();
+            const lines = output.split(/\r\n|\n/);
+            
             const mHandler = new MacroHandler();
+            const resList: string[] = [];
 
-            lines.filter((line) => line.trim() !== '')
-                .forEach((line) => {
-                    const value = mHandler.toExpression(line);
+            // Parse each non-empty line
+            for (const line of lines) {
+                const trimmedLine = line.trim();
+                
+                if (!trimmedLine) {
+                    continue;
+                }
 
-                    if (value) {
-                        resList.push(value);
-                    }
-                });
+                const value = mHandler.toExpression(trimmedLine);
+                
+                if (value) {
+                    resList.push(value);
+                }
+            }
 
             return resList;
         } catch (err) {
-            console.warn('getArmClangMacroList failed:', err);
-            return ['__GNUC__=4', '__GNUC_MINOR__=2', '__GNUC_PATCHLEVEL__=1'];
+            const errorMessage = err instanceof Error ? err.message : String(err);
+            console.warn('getArmClangMacroList failed:', errorMessage);
+            return DEFAULT_MACROS;
         }
     }
 
@@ -505,24 +529,39 @@ export class ArmTarget extends PTarget {
 
     protected getSystemIncludes(target: any): string[] | undefined {
         const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform()));
-        if (keilRootDir.isDir()) {
-            const pCCUsed = target['pCCUsed'];
-            let toolchain = pCCUsed.split("::")[2];
-            if (toolchain === null || toolchain === '') {
-                toolchain = target['uAC6'] === 1 ? 'ARMCLANG' : 'ARMCC';;
-            }
-            const incDirPath = normalize(`${keilRootDir.path}${File.sep}ARM${File.sep}${toolchain}${File.sep}include`);
-            const incDir = new File(incDirPath);
-            const incPath = incDir.path.replace(/\\/g, '/');
-            if (incDir.isDir()) {
-                return [incPath].concat(
-                    incDir.getList(File.emptyFilter).map((dir) => dir.path.replace(/\\/g, '/')));
-            }
-
-            return [incPath];
+        
+        if (!keilRootDir.isDir()) {
+            return undefined;
         }
 
-        return undefined;
+        // Determine toolchain type
+        let toolchain: string;
+        const pCCUsed = target['pCCUsed'];
+        
+        if (pCCUsed && typeof pCCUsed === 'string') {
+            const parts = pCCUsed.split('::');
+            toolchain = parts.length > 2 ? parts[2] : '';
+        } else {
+            toolchain = '';
+        }
+
+        // Fallback to default toolchain if not specified
+        if (!toolchain) {
+            toolchain = target['uAC6'] === 1 ? 'ARMCLANG' : 'ARMCC';
+        }
+
+        // Build include directory path
+        const incDirPath = normalize(`${keilRootDir.path}${File.sep}ARM${File.sep}${toolchain}${File.sep}include`);
+        const incDir = new File(incDirPath);
+        const incPath = incDir.path.replace(/\\/g, '/');
+
+        // Return include paths
+        if (incDir.isDir()) {
+            const subDirs = incDir.getList(File.emptyFilter).map((dir) => dir.path.replace(/\\/g, '/'));
+            return [incPath, ...subDirs];
+        }
+
+        return [incPath];
     }
     private processArray(item: any): any[] {
         if (Array.isArray(item)) {
@@ -540,51 +579,85 @@ export class ArmTarget extends PTarget {
         for (const line of lines) {
             const trimmed = line.trim();
 
-            // 跳过非宏定义行
-            if (!trimmed.startsWith('#define') && !inMultiLine) continue;
-            if (trimmed === '#define') continue; // 无效定义
+            // Skip non-macro definition lines
+            if (!trimmed.startsWith('#define') && !inMultiLine) {
+                continue;
+            }
+
+            // Skip invalid define statement
+            if (trimmed === '#define') {
+                continue;
+            }
 
             if (!inMultiLine) {
-                // 解析新宏定义
+                // Parse new macro definition
                 const parts = trimmed.split(/\s+/).filter(p => p);
-                if (parts.length < 2) continue; // 无效格式
+                
+                if (parts.length < 2) {
+                    continue; // Invalid format
+                }
 
                 currentMacro.name = parts[1];
                 currentMacro.value = parts.slice(2).join(' ');
-                // 更高效的注释移除方式
-                const singleLineCommentIndex = currentMacro.value.indexOf('//');
-                const multiLineCommentStartIndex = currentMacro.value.indexOf('/*');
 
-                if (singleLineCommentIndex !== -1) {
-                    currentMacro.value = currentMacro.value.substring(0, singleLineCommentIndex);
-                } else if (multiLineCommentStartIndex !== -1) {
-                    const multiLineCommentEndIndex = currentMacro.value.indexOf('*/', multiLineCommentStartIndex + 2);
-                    if (multiLineCommentEndIndex !== -1) {
-                        currentMacro.value = currentMacro.value.substring(0, multiLineCommentStartIndex) +
-                            currentMacro.value.substring(multiLineCommentEndIndex + 2);
-                    }
-                }
-                currentMacro.value = currentMacro.value.trim();
+                // Remove comments from macro value
+                this.removeCommentsFromMacroValue(currentMacro);
 
-                // 检查是否多行宏
+                // Check if this is a multi-line macro
                 inMultiLine = trimmed.endsWith('\\');
             } else {
-                // 处理多行宏的续行
-                currentMacro.value += ' ' + trimmed.replace(/\\$/, '').trim();
+                // Handle continuation of multi-line macro
+                const continuedLine = trimmed.replace(/\\$/, '').trim();
+                currentMacro.value += ' ' + continuedLine;
                 inMultiLine = trimmed.endsWith('\\');
             }
 
-            // 如果当前宏定义结束
+            // If macro definition is complete
             if (!inMultiLine && currentMacro.name) {
                 if (currentMacro.value) {
                     this.defines.add(`${currentMacro.name}=${currentMacro.value}`);
                 } else {
                     this.defines.add(currentMacro.name);
                 }
+                
+                // Reset for next macro
                 currentMacro = { name: '', value: '' };
             }
         }
+    }
 
+    private removeCommentsFromMacroValue(macro: { name: string; value: string }) {
+        const value = macro.value;
+        
+        // Find single-line comment
+        const singleLineCommentIndex = value.indexOf('//');
+        
+        // Find multi-line comment
+        const multiLineCommentStartIndex = value.indexOf('/*');
+
+        if (singleLineCommentIndex !== -1) {
+            // Check if multi-line comment starts before single-line comment
+            if (multiLineCommentStartIndex !== -1 && multiLineCommentStartIndex < singleLineCommentIndex) {
+                // Handle multi-line comment first
+                const multiLineCommentEndIndex = value.indexOf('*/', multiLineCommentStartIndex + 2);
+                if (multiLineCommentEndIndex !== -1) {
+                    macro.value = value.substring(0, multiLineCommentStartIndex) + 
+                                  value.substring(multiLineCommentEndIndex + 2);
+                }
+            } else {
+                // Remove single-line comment
+                macro.value = value.substring(0, singleLineCommentIndex);
+            }
+        } else if (multiLineCommentStartIndex !== -1) {
+            // Only multi-line comment exists
+            const multiLineCommentEndIndex = value.indexOf('*/', multiLineCommentStartIndex + 2);
+            if (multiLineCommentEndIndex !== -1) {
+                macro.value = value.substring(0, multiLineCommentStartIndex) + 
+                              value.substring(multiLineCommentEndIndex + 2);
+            }
+        }
+
+        macro.value = macro.value.trim();
     }
 
     protected getRTEIncludes(target: any, rteDom: any): string[] | undefined {
@@ -879,10 +952,10 @@ export class ArmTarget extends PTarget {
         }
     }
     protected getIntelliSenseMode(target: any): string {
-        if (target['uAC6'] === 1) { // ARMClang
+        if (target['uAC6'] === 1) { // ARMCLANG (AC6)
             return 'clang-arm';
-        } else { // ARMCC
-            return '${default}';
+        } else { // ARMCC (AC5)
+            return 'gcc-arm';
         }
     }
 }
