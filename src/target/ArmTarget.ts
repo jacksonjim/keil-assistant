@@ -169,7 +169,7 @@ export class ArmTarget extends PTarget {
 
         for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
             const rawLine = lines[lineIndex];
-            
+
             // Skip empty or whitespace-only lines
             if (!rawLine || !rawLine.trim()) {
                 continue;
@@ -177,7 +177,7 @@ export class ArmTarget extends PTarget {
 
             // Remove trailing backslash (line continuation character)
             const trimmedLine = rawLine.endsWith('\\') ? rawLine.slice(0, -1) : rawLine;
-            
+
             // Split by spaces that are not preceded by backslash or colon
             const subLines = trimmedLine.trim().split(/(?<![\\:]) /);
 
@@ -263,15 +263,15 @@ export class ArmTarget extends PTarget {
     private getArmClangMacroList(armClangPath: string, armClangCpu?: string): string[] {
         // Default macros when armclang execution fails
         const DEFAULT_MACROS = ['__GNUC__=4', '__GNUC_MINOR__=2', '__GNUC_PATCHLEVEL__=1'];
-        
+
         try {
             // Build command arguments safely
             const cmdArgs = ['--target=arm-arm-none-eabi'];
-            
+
             if (armClangCpu) {
                 cmdArgs.push(armClangCpu);
             }
-            
+
             cmdArgs.push('-E', '-dM', '-xc', '-', '<', 'nul');
 
             // Construct command line with proper quoting
@@ -281,20 +281,20 @@ export class ArmTarget extends PTarget {
             // Execute command and parse output
             const output = execSync(cmdLine).toString();
             const lines = output.split(/\r\n|\n/);
-            
+
             const mHandler = new MacroHandler();
             const resList: string[] = [];
 
             // Parse each non-empty line
             for (const line of lines) {
                 const trimmedLine = line.trim();
-                
+
                 if (!trimmedLine) {
                     continue;
                 }
 
                 const value = mHandler.toExpression(trimmedLine);
-                
+
                 if (value) {
                     resList.push(value);
                 }
@@ -529,7 +529,7 @@ export class ArmTarget extends PTarget {
 
     protected getSystemIncludes(target: any): string[] | undefined {
         const keilRootDir = new File(ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform()));
-        
+
         if (!keilRootDir.isDir()) {
             return undefined;
         }
@@ -537,7 +537,7 @@ export class ArmTarget extends PTarget {
         // Determine toolchain type
         let toolchain: string;
         const pCCUsed = target['pCCUsed'];
-        
+
         if (pCCUsed && typeof pCCUsed === 'string') {
             const parts = pCCUsed.split('::');
             toolchain = parts.length > 2 ? parts[2] : '';
@@ -592,7 +592,7 @@ export class ArmTarget extends PTarget {
             if (!inMultiLine) {
                 // Parse new macro definition
                 const parts = trimmed.split(/\s+/).filter(p => p);
-                
+
                 if (parts.length < 2) {
                     continue; // Invalid format
                 }
@@ -619,7 +619,7 @@ export class ArmTarget extends PTarget {
                 } else {
                     this.defines.add(currentMacro.name);
                 }
-                
+
                 // Reset for next macro
                 currentMacro = { name: '', value: '' };
             }
@@ -628,10 +628,10 @@ export class ArmTarget extends PTarget {
 
     private removeCommentsFromMacroValue(macro: { name: string; value: string }) {
         const value = macro.value;
-        
+
         // Find single-line comment
         const singleLineCommentIndex = value.indexOf('//');
-        
+
         // Find multi-line comment
         const multiLineCommentStartIndex = value.indexOf('/*');
 
@@ -641,8 +641,8 @@ export class ArmTarget extends PTarget {
                 // Handle multi-line comment first
                 const multiLineCommentEndIndex = value.indexOf('*/', multiLineCommentStartIndex + 2);
                 if (multiLineCommentEndIndex !== -1) {
-                    macro.value = value.substring(0, multiLineCommentStartIndex) + 
-                                  value.substring(multiLineCommentEndIndex + 2);
+                    macro.value = value.substring(0, multiLineCommentStartIndex) +
+                        value.substring(multiLineCommentEndIndex + 2);
                 }
             } else {
                 // Remove single-line comment
@@ -652,8 +652,8 @@ export class ArmTarget extends PTarget {
             // Only multi-line comment exists
             const multiLineCommentEndIndex = value.indexOf('*/', multiLineCommentStartIndex + 2);
             if (multiLineCommentEndIndex !== -1) {
-                macro.value = value.substring(0, multiLineCommentStartIndex) + 
-                              value.substring(multiLineCommentEndIndex + 2);
+                macro.value = value.substring(0, multiLineCommentStartIndex) +
+                    value.substring(multiLineCommentEndIndex + 2);
             }
         }
 
@@ -739,12 +739,15 @@ export class ArmTarget extends PTarget {
                     if (comp['@_Cgroup'] === cGroup
                         && comp['@_condition'] === condition) {
                         const files = this.processArray(comp.files?.file);
-
                         for (const file of files) {
-                            if (file['@_category'] === 'include') {
-                                this.addValidPath(incSet, join(cRootDir, file['@_name']));
-                            } else if (file['@_category'] === 'header') {
-                                this.addValidPath(incSet, join(cRootDir, file['@_name'], ".."));
+                            const name = file['@_name'];
+                            const attr = file['@_attr'];
+                            const category = file['@_category'];
+                            const hasTemplates = name.includes('Templates/') || name.includes('Templates_LL/')
+                            if (category === 'include') {
+                                this.addValidPath(incSet, join(cRootDir, name));
+                            } else if (category === 'header' && attr !== 'template' && !hasTemplates) {
+                                this.addValidPath(incSet, join(cRootDir, name, ".."));
                             }
                         }
                     }
@@ -797,8 +800,10 @@ export class ArmTarget extends PTarget {
                     for (const af of apifiles) {
                         const category = af['@_category'];
                         const afPath = af['@_name'];
+                        const attr = af['@_attr'];
+
                         const headerExtName = extname(afPath);
-                        if (category === 'header' && (headerExtName === '.h' || headerExtName === '.hpp')) {
+                        if (category === 'header' && attr !== 'template' && (headerExtName === '.h' || headerExtName === '.hpp')) {
                             const headerDir = PTarget.getDirFromPath(afPath);
                             this.addValidPath(incSet, join(cRootDir, headerDir));
                         }
