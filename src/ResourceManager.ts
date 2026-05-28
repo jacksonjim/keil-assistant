@@ -132,6 +132,9 @@ export class ResourceManager {
     getProjectCustomIncludePaths(): string[] {
         return this.getAppConfig().get<string[]>('Project.CustomIncludePaths') ?? [];
     }
+    getProjectIntelliSenseMode(): string {
+        return this.getAppConfig().get<string>('Project.IntelliSenseMode') ?? "";
+    }
 
     getIconByName(name: string): vscode.Uri {
         const icon = this.iconMap.get(name);

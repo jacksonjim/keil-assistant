@@ -3,10 +3,16 @@
     "description": "Keil uVision Assistant is convenient for working with uVision projects, but does not change the principle project file configuration, and common functions include writing code, compiling, recompiling, downloading and other functions",
     "keil-assistant.contributes.conf.title": "Keil Assistant",
     "keil-assistant.contributes.views.explorer.name": "Keil uVision Project",
-    "keil-assistant.contributes.conf.props.mdk.home.description": "Keil (MDK/C51/C251 All in one) Installation directory, must not empty ; default: C:\\Keil_v5",
+    "keil-assistant.contributes.conf.props.mdk.home.description": "Keil (MDK/C51/C251 All in one) Installation directory, must not empty; default: C:\\Keil_v5",
     "keil-assistant.contributes.conf.props.C51.home.description": "Option Keil (C51) Installation directory",
     "keil-assistant.contributes.conf.props.C251.home.description": "Option Keil (C251) Installation directory ",
-    "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision project file name exclude list",
+    "keil-assistant.contributes.conf.props.project.intelliSenseMode.markdownDescription":{
+        "message": "The value to use in a configuration if `intelliSenseMode` is either not specified or set to `${default}`.",
+        "comment": [
+            "Markdown text between `` should not be translated or localized (they represent literal text) and the capitalization, spacing, and punctuation (including the ``) should not be altered."
+        ]
+    },
+    "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision project file name exclude list; Example: \r\n\r\n default: [\r\n\r\ntemplate.uvproj,\r\n\r\ntemplate.uvprojx,\r\n\r\ntemplate.uvmpw\r\n\r\n]",
     "keil-assistant.contributes.conf.props.project.fileLocationList.description": "uVision project file locations",
     "keil-assistant.contributes.conf.props.project.customIncludePaths.description": "uVision project file custom include paths; Use relative paths, like: \r\n\r\n../lib/inc,\r\n\r\n../common/inc",
     "keil-assistant.contributes.commands.project-open.title": "Open keil uVision project",

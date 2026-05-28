@@ -1,12 +1,13 @@
 {
     "displayName": "Keil 助理",
-    "description": "Keil uVision 助理方便处理uVision项目，但是不会更改原理项目文件配置，常用功能有编写代码、编译、重新编译，下载等功能",
+    "description": "Keil uVision 助理方便处理uVision项目, 但是不会更改原理项目文件配置, 常用功能有编写代码、编译、重新编译, 下载等功能",
     "keil-assistant.contributes.conf.title": "Keil uVision 助理",
     "keil-assistant.contributes.views.explorer.name": "Keil uVision 项目",
     "keil-assistant.contributes.conf.props.mdk.home.description": "Keil uVision (MDK/C51/C251) 安装目录, 必填项  默认值: C:\\Keil_v5",
     "keil-assistant.contributes.conf.props.C51.home.description": "Keil uVision C51 安装目录 可选项",
     "keil-assistant.contributes.conf.props.C251.home.description": "Keil uVision C251 安装目录 可选项",
-    "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision 项目文件名排除列表",
+    "keil-assistant.contributes.conf.props.project.intelliSenseMode.markdownDescription": "`intelliSenseMode` 未指定或设置为 `${default}` 时要在配置中使用的值。",
+    "keil-assistant.contributes.conf.props.project.excludeList.description": "uVision 项目文件名排除列表; 示例: \r\n\r\n default: [\r\n\r\ntemplate.uvproj,\r\n\r\ntemplate.uvprojx,\r\n\r\ntemplate.uvmpw\r\n\r\n]",
     "keil-assistant.contributes.conf.props.project.fileLocationList.description": "uVision 项目文件位置",
     "keil-assistant.contributes.conf.props.project.customIncludePaths.description": "uVision 项目自定义头文件路径; 使用相对路径, 例如: \r\n\r\n../lib/inc,\r\n\r\n ../common/inc",
     "keil-assistant.contributes.commands.project-open.title": "打开Keil uVision的项目",
@@ -18,7 +19,7 @@
     "keil-assistant.contributes.commands.project-download.title": "下载到设备",
     "keil-assistant.contributes.commands.project-copy.title": "复制对像",
     "keil-assistant.contributes.commands.project-generateCompileCommandsJson": "Keil uVision Assistant: 生成compile_commands.json(仅MDK)",
-    "keil-assistant.contributes.conf.props.keil.home.markdownDescription": "Keil uVision (MDK/C51/C251) 安装目录,请根据实际安装目录修改默认值, 如果(MDK/C51/C251)安装在同一目录内，可以单独设置MDK的安装目录即可 \r\n 默认值: {\"MDK\":\"C:\\Keil_v5\"}。\r\n\r\n例子:\r\n\r\n\"{\"MDK\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C51\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C251\":\"C:\\Keil_v5\"}\"",
+    "keil-assistant.contributes.conf.props.keil.home.markdownDescription": "Keil uVision (MDK/C51/C251) 安装目录,请根据实际安装目录修改默认值, 如果(MDK/C51/C251)安装在同一目录内, 可以单独设置MDK的安装目录即可 \r\n 默认值: {\"MDK\":\"C:\\Keil_v5\"}。\r\n\r\n例子:\r\n\r\n\"{\"MDK\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C51\":\"C:\\Keil_v5\"}\"\r\n\r\n\"{\"C251\":\"C:\\Keil_v5\"}\"",
     "keil-assistant.contributes.viewsWelcome.project.content": "uVision的项目不存在 [了解更多信息](https://github.com/jacksonjim/keil-assistant/blob/master/README.md).\n[打开uVision项目](command:explorer.open)",
     "keil-assistant.contributes.conf.props.project.FindMaxDepth.description": "uVision 项目文件搜索深度,默认为1层子文件夹"
 }

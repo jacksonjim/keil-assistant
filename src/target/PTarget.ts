@@ -277,7 +277,14 @@ export abstract class PTarget implements IView {
 
         this.cStandard = this.getCStandard(this.targetDOM);
         this.cppStandard = this.getCppStandard(this.targetDOM);
-        this.intelliSenseMode = this.getIntelliSenseMode(this.targetDOM).replace(/\\/g, '/');
+
+        const intelliSenseMode = ResourceManager.getInstance().getProjectIntelliSenseMode();
+
+        if (intelliSenseMode !== '') {
+            this.intelliSenseMode = intelliSenseMode;
+        } else {
+            this.intelliSenseMode = this.getIntelliSenseMode(this.targetDOM).replace(/\\/g, '/');
+        }
 
         // set includes
         this.includes.clear();
