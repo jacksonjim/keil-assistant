@@ -2,6 +2,15 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.26]
+
+### Fixed
+- #94 Incorrect intelliSenseMode for ARMCC5 (AC5) projects
+- #96 Incorrect intelliSenseMode for ARMCC5 (AC5) projects
+
+### Feature
+- in the settings add intelliSenseMode set custome mode, if it is empty use default or cpp intelliSenseMode set;
+
 ## [v1.9.25]
 
 ### Fixed
