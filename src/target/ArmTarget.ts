@@ -1,8 +1,7 @@
 import { File } from '../node_utility/File';
 import { ResourceManager } from '../ResourceManager';
 import type { KeilProjectInfo } from '../core/KeilProjectInfo';
-import { CmdLineHandler } from '../CmdLineHandler';
-import { execSync } from 'child_process';
+import { spawnSync } from 'child_process';
 import { XMLParser } from 'fast-xml-parser';
 import { existsSync, statSync, readFileSync, readdirSync } from 'fs';
 import { normalize, resolve, join, extname } from 'path';
@@ -142,6 +141,7 @@ export class ArmTarget extends PTarget {
         '__builtin_arm_stlex(x,y)=0U'
     ];
 
+    private static armclangBuildinMacrosCache = new Map<string, string[]>();
     private static armclangBuildinMacros: string[] | undefined;
 
     constructor(prjInfo: KeilProjectInfo, uvInfo: UVisonInfo, targetDOM: any, rteDom: any) {
@@ -222,14 +222,19 @@ export class ArmTarget extends PTarget {
     }
 
     private initArmclangMacros(cpuType: string | undefined) {
-        if (ArmTarget.armclangBuildinMacros === undefined) {
-            const armClangPath = `${ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform())}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
+        const armClangPath = `${ResourceManager.getInstance().getKeilRootDir(this.getKeilPlatform())}${File.sep}ARM${File.sep}ARMCLANG${File.sep}bin${File.sep}armclang.exe`;
 
-            cpuType = cpuType?.replaceAll('"', '');
-            const armClangCpu = this.getArmCpuType(cpuType);
+        cpuType = cpuType?.replaceAll('"', '');
+        const armClangCpu = this.getArmCpuType(cpuType);
+        const cacheKey = `${armClangPath}|${armClangCpu ?? ''}`;
 
-            ArmTarget.armclangBuildinMacros = this.getArmClangMacroList(armClangPath, armClangCpu);
+        if (ArmTarget.armclangBuildinMacrosCache.has(cacheKey)) {
+            ArmTarget.armclangBuildinMacros = ArmTarget.armclangBuildinMacrosCache.get(cacheKey);
+            return;
         }
+
+        ArmTarget.armclangBuildinMacros = this.getArmClangMacroList(armClangPath, armClangCpu);
+        ArmTarget.armclangBuildinMacrosCache.set(cacheKey, ArmTarget.armclangBuildinMacros ?? []);
     }
 
     protected getSysDefines(target: any) {
@@ -265,27 +270,31 @@ export class ArmTarget extends PTarget {
         const DEFAULT_MACROS = ['__GNUC__=4', '__GNUC_MINOR__=2', '__GNUC_PATCHLEVEL__=1'];
 
         try {
-            // Build command arguments safely
-            const cmdArgs = ['--target=arm-arm-none-eabi'];
+            const args = ['--target=arm-arm-none-eabi'];
 
             if (armClangCpu) {
-                cmdArgs.push(armClangCpu);
+                args.push(armClangCpu);
             }
 
-            cmdArgs.push('-E', '-dM', '-xc', '-', '<', 'nul');
+            args.push('-E', '-dM', '-xc', '-');
 
-            // Construct command line with proper quoting
-            const quotedPath = CmdLineHandler.quoteString(armClangPath, '"');
-            const cmdLine = `${quotedPath} ${cmdArgs.join(' ')}`;
+            const result = spawnSync(armClangPath, args, {
+                encoding: 'utf8',
+                input: '',
+                windowsHide: true
+            });
 
-            // Execute command and parse output
-            const output = execSync(cmdLine).toString();
+            if (result.error || result.status !== 0) {
+                const errorMessage = result.error?.message ?? `armclang exited with code ${result.status}`;
+                throw new Error(errorMessage);
+            }
+
+            const output = String(result.stdout ?? '');
             const lines = output.split(/\r\n|\n/);
 
             const mHandler = new MacroHandler();
             const resList: string[] = [];
 
-            // Parse each non-empty line
             for (const line of lines) {
                 const trimmedLine = line.trim();
 
@@ -308,7 +317,7 @@ export class ArmTarget extends PTarget {
         }
     }
 
-    private getArmCpuType(cpu: string | undefined) {
+    private getArmCpuType(cpu: string | undefined): string | undefined {
         switch (cpu) {
             case 'Cortex-M0':
                 return '-mcpu=Cortex-M0';
@@ -348,7 +357,8 @@ export class ArmTarget extends PTarget {
                 return '-mcpu=Cortex-A7';
             case 'Cortex-A9':
                 return '-mcpu=Cortex-A9';
-            case undefined: { throw new Error('Not implemented yet: undefined case') }
+            default:
+                return undefined;
         }
     }
     /*
@@ -779,7 +789,6 @@ export class ArmTarget extends PTarget {
                 if (bundle && bundle['@_Cbundle'] === cBundle
                     && bundle['@_Cclass'] === cClass && bundle['@_Cversion'] === cVersion) {
                     const components = this.processArray(bundle.component);
-                    console.log(`cbundle=${cBundle}, class=${cClass}, version=${cVersion}, group=${cGroup}, variant=${cVariant}, condition=${condition}`);
                     for (const comp of components) {
                         if (comp['@_Cgroup'] === cGroup
                             && comp['@_Cvariant'] === cVariant
@@ -872,12 +881,15 @@ export class ArmTarget extends PTarget {
             this.addValidPath(incSet, rteIncPath);
 
             if (existsSync(rteIncPath) && statSync(rteIncPath).isDirectory()) {
-                const incFiles = readdirSync(rteIncPath);
-                incFiles.forEach(incFile => {
-                    const incFilePath = join(rteIncPath, incFile);
+                const incEntries = readdirSync(rteIncPath, { withFileTypes: true });
+                incEntries.forEach((entry) => {
+                    if (!entry.isFile()) {
+                        return;
+                    }
+                    const incFilePath = join(rteIncPath, entry.name);
                     const content = readFileSync(incFilePath, 'utf-8');
                     this.extractMacros(content);
-                })
+                });
             }
 
         }
