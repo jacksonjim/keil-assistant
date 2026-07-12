@@ -2,6 +2,22 @@
 
 All notable changes to the "keil-assistant" extension will be documented in this file.
 
+## [v1.9.27]
+
+### Fixed
+- **ArmTarget**: Improved ARMCLANG built-in macro retrieval reliability.
+  - Switched from shell-based `armclang` execution to `spawnSync(...)` for safer and more consistent command invocation.
+  - Added per-CPU cache for ARMCLANG built-in macro lists to avoid repeated tool invocations.
+  - Prevented undefined CPU mappings from throwing errors during macro initialization.
+
+### Optimized
+- **ArmTarget**: Improved RTE include handling and file scanning efficiency.
+  - Only reads actual files in RTE include paths and avoids unnecessary directory entries.
+  - Removed unused `execSync` import and eliminated extraneous debug logging.
+
+### Validation
+- Verified `yarn run compile` passes successfully after cleanup.
+
 ## [v1.9.26]
 
 ### Fixed
