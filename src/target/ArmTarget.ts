@@ -666,6 +666,7 @@ export class ArmTarget extends PTarget {
         const { components, packages, files } = rteDom;
         // 强化数组标准化处理逻辑
         const cpuinfo = target?.TargetOption?.TargetCommonOption?.Cpu ?? undefined;
+        const target_cpu = target?.TargetOption?.TargetArmAds?.ArmAdsMisc?.AdsCpuType?.replaceAll('"', '') ?? undefined;
         const armMisc = (target?.uAC6 === 1) ? 'ARMCC6' : 'ARMCC';
 
         // 正则表达式：提取Cortex-M*和可选的FPU信息
@@ -730,6 +731,28 @@ export class ArmTarget extends PTarget {
                 continue;
             }
 
+            let pdsc_condition = undefined;
+            if (pdscDom?.package?.conditions) {
+                const conditions = this.processArray(pdscDom.package.conditions.condition);
+                for (const condition of conditions) {
+                    if (condition?.accept) {
+                        const id = condition['@_id'];
+                        const accepts = this.processArray(condition.accept);
+                        for (const accept of accepts) {
+                            const dcore = accept['@_Dcore'];
+                            if (dcore === target_cpu) {
+                                pdsc_condition = `${id}_ARMCC`
+                                break;
+                            }
+                        }
+                        if (pdsc_condition != undefined) {
+                            break;
+                        }
+
+                    }
+                }
+            }
+
             if (pdscDom?.package?.components) {
                 // 组件路径处理逻辑
                 const components = this.processArray(pdscDom.package.components.component);
@@ -756,7 +779,7 @@ export class ArmTarget extends PTarget {
                 if (bundle && bundle['@_Cbundle'] === cBundle
                     && bundle['@_Cclass'] === cClass && bundle['@_Cversion'] === cVersion) {
                     const components = this.processArray(bundle.component);
-
+                    console.log(`cbundle=${cBundle}, class=${cClass}, version=${cVersion}, group=${cGroup}, variant=${cVariant}, condition=${condition}`);
                     for (const comp of components) {
                         if (comp['@_Cgroup'] === cGroup
                             && comp['@_Cvariant'] === cVariant
@@ -772,6 +795,12 @@ export class ArmTarget extends PTarget {
                                 if (fileCondition === undefined) {
                                     if (file['@_category'] === 'include') {
                                         this.addValidPath(incSet, join(cRootDir, file['@_name']));
+                                    } else if (file['@_category'] === 'header') {
+                                        const headerExtName = extname(file['@_name']);
+                                        if ((headerExtName === '.h' || headerExtName === '.hpp')) {
+                                            const headerDir = PTarget.getDirFromPath(file['@_name']);
+                                            this.addValidPath(incSet, join(cRootDir, headerDir));
+                                        }
                                     } else if (file['@_category'] === 'preIncludeGlobal') {
                                         const headerExtName = extname(file['@_name']);
                                         if ((headerExtName === '.h' || headerExtName === '.hpp')) {
@@ -779,7 +808,7 @@ export class ArmTarget extends PTarget {
                                             this.addValidPath(incSet, join(cRootDir, headerDir));
                                         }
                                     }
-                                } else if (fileCondition === rotsCondition) {
+                                } else if (fileCondition === rotsCondition || fileCondition === pdsc_condition) {
                                     if (file['@_category'] === 'include') {
                                         this.addValidPath(incSet, join(cRootDir, file['@_name']));
                                     }
