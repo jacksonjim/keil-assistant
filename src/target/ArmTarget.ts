@@ -939,6 +939,16 @@ export class ArmTarget extends PTarget {
         const uC99 = dat['uC99'];
         const uGnu = dat['uGnu'];
         const v6Lang = dat['v6Lang'];
+        const uAC6 = target['uAC6'];
+
+        if (uAC6 !== 1) {
+            if (uC99 === 1) {
+                return uGnu === 1 ? 'gnu99' : 'c99';
+            }
+
+            return uGnu === 1 ? 'gnu90' : 'c90';
+        }
+
 
         switch (v6Lang) {
             case 1:
